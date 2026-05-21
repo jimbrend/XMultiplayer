@@ -69,35 +69,38 @@
     .header-tab.active { background:var(--white); color:var(--black); }
     .header-tab.mp-tab { color:var(--mp-accent); border:1px solid rgba(124,58,237,.4); }
     .header-tab.mp-tab.active { background:var(--mp-accent); color:var(--white); border-color:var(--mp-accent); }
-    .header-right { display:flex; align-items:center; gap:10px; }
-    .live-dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+    .header-right { display:flex; align-items:center; gap:14px; }
+    .header-status-cluster { display:flex; align-items:center; gap:12px; }
+    .header-live {
+      display:flex; align-items:center; gap:8px;
+      padding:4px 10px; border-radius:999px;
+      border:1px solid transparent; cursor:pointer;
+      transition: border-color .2s, background .2s;
+    }
+    .header-live:hover { background:rgba(255,255,255,.04); border-color:var(--border); }
+    .header-live.live-solo:hover { border-color:rgba(244,33,46,.35); }
+    .live-dot { width:8px; height:8px; border-radius:50%; background:var(--red); flex-shrink:0; transition: background .3s; }
+    .live-dot.pulse { animation:pulse 2s infinite; }
     @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
-    .live-label { font-size:11px; color:var(--dim); }
-    /* Large tutorial toggle — fixed top-right */
+    .live-label { font-size:11px; color:var(--dim); font-weight:600; letter-spacing:.3px; text-transform:lowercase; }
+    .header-live.live-multiplayer .live-label { color:var(--green); }
+    /* Tutorial toggle — inline next to live */
     .tutorial-master {
-      position: fixed;
-      top: 68px;
-      right: 20px;
-      z-index: 10006;
       display: flex;
       align-items: center;
-      gap: 14px;
-      padding: 12px 18px 12px 20px;
+      gap: 8px;
+      padding: 4px 10px 4px 12px;
       background: #16181c;
       border: 1px solid #2f3336;
-      border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+      border-radius: 999px;
       transition: border-color .25s, box-shadow .25s;
-      pointer-events: auto;
     }
     body.tutorial-active .tutorial-master {
       border-color: #1d9bf0;
-      box-shadow: 0 0 0 1px rgba(29, 155, 240, 0.5),
-                  0 0 28px rgba(29, 155, 240, 0.35),
-                  0 12px 40px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0 12px rgba(29, 155, 240, 0.35);
     }
     .tutorial-master-title {
-      font-size: 14px;
+      font-size: 11px;
       font-weight: 700;
       color: #e7e9ea;
       letter-spacing: 0.02em;
@@ -118,8 +121,8 @@
     }
     .tutorial-switch-slider {
       position: relative;
-      width: 56px;
-      height: 30px;
+      width: 44px;
+      height: 24px;
       background: #3a3a3a;
       border-radius: 999px;
       transition: background .25s;
@@ -130,8 +133,8 @@
       position: absolute;
       top: 3px;
       left: 3px;
-      width: 24px;
-      height: 24px;
+      width: 18px;
+      height: 18px;
       background: #fff;
       border-radius: 50%;
       transition: transform .25s;
@@ -141,7 +144,7 @@
       background: #1d9bf0;
     }
     .tutorial-switch-wrap input:checked + .tutorial-switch-slider::after {
-      transform: translateX(26px);
+      transform: translateX(20px);
     }
     .tutorial-switch-states {
       display: flex;
@@ -533,20 +536,22 @@
     <button class="header-tab" data-page="keet">🔗 Keet</button>
   </div>
   <div class="header-right">
-    <div class="live-dot" id="liveDot"></div>
-    <span class="live-label" id="liveLabel">connecting…</span>
+    <div class="header-status-cluster">
+      <div class="header-live live-solo" id="liveStatusWrap" role="button" tabindex="0" aria-label="Connection status">
+        <div class="live-dot" id="liveDot"></div>
+        <span class="live-label" id="liveLabel">solo</span>
+      </div>
+      <div class="tutorial-master" id="tutorialMaster" role="group" aria-label="Tutorial walkthrough">
+        <span class="tutorial-master-title">Tutorial</span>
+        <label class="tutorial-switch-wrap" id="tutorialSwitchLabel">
+          <input type="checkbox" id="tutorialSwitch" aria-label="Turn tutorial walkthrough on or off">
+          <span class="tutorial-switch-slider"></span>
+          <span class="tutorial-switch-states"><span class="off">OFF</span><span class="on">ON</span></span>
+        </label>
+      </div>
+    </div>
   </div>
 </header>
-
-<!-- Large tutorial ON/OFF — top-right, visible during walkthrough -->
-<div class="tutorial-master" id="tutorialMaster" role="group" aria-label="Tutorial walkthrough">
-  <span class="tutorial-master-title">Tutorial</span>
-  <label class="tutorial-switch-wrap" id="tutorialSwitchLabel">
-    <input type="checkbox" id="tutorialSwitch" aria-label="Turn tutorial walkthrough on or off">
-    <span class="tutorial-switch-slider"></span>
-    <span class="tutorial-switch-states"><span class="off">OFF</span><span class="on">ON</span></span>
-  </label>
-</div>
 
 <div class="main">
 

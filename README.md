@@ -14,14 +14,19 @@ Track every post you see on 𝕏. Multiplayer feed sharing with friends anywhere
 4. Browse `x.com` — posts you dwell on 600ms+ are logged automatically
 5. **Open Dashboard** in the extension popup → choose **macOS / Linux / Windows** to locate `x-multiplayer/dashboard/index.html`
 
-### 2 — Start the Dashboard
+### 2 — Start the Dashboard (required for full features)
+
+The dashboard **imports your seen history** from the extension when the local server is running:
 
 ```bash
+cd x-multiplayer
 node server.js
 # → http://localhost:3000
 ```
 
-Or open **`x-multiplayer/dashboard/index.html`** in Chrome (wherever you cloned the repo — Downloads, Desktop, etc.). The extension popup **Open Dashboard** button lets you pick **macOS**, **Linux**, or **Windows** and will search Downloads or use your saved folder path.
+Open **http://localhost:3000** in Chrome — the **multiplayer tutorial** starts automatically on first launch.
+
+Or open **`/path-where-you-downloaded-X-Multiplayer-replace-this-to-launch-it/x-multiplayer/dashboard/index.html`** (replace the prefix with your real folder). The extension **Open Dashboard** panel has **Copy** for `node server.js`, links to [source on GitHub](https://github.com/jimbrend/XMultiplayer), and **macOS / Linux / Windows** buttons to open `index.html` in a new tab.
 
 ---
 

@@ -89,6 +89,7 @@ function init() {
   setupClear();
   setupBentoHover();
   setupBreakout();
+  setupLiveStatus();
   startLiveSync();
 
   mpSyncSeen = localStorage.getItem(LS_MP_SYNC) !== '0';
@@ -145,6 +146,7 @@ function loadHistory() {
         loadFromLocalStorage();
       }
       renderFeed(); updateStats();
+      updateLiveIndicator();
     });
   } else {
     loadFromLocalStorage();
@@ -158,6 +160,7 @@ function loadFromLocalStorage() {
   }
   if (allTweets.length === 0) injectDemoTweets();
   else document.getElementById('demoBanner').style.display = 'none';
+  updateLiveIndicator();
 }
 
 function injectDemoTweets() {
@@ -274,6 +277,7 @@ function handleWsMessage(msg) {
       }
     });
     if (msg.type === 'tweet') toast(`Friend saw: ${msg.data?.author || 'a post'}`, 'mp');
+    updateLiveIndicator();
   }
 
   if (msg.type === 'join') {
@@ -281,12 +285,14 @@ function handleWsMessage(msg) {
     document.getElementById('mpFriendColTitle').textContent = msg.handle;
     document.getElementById('friendDot').className = 'mp-status-dot connected';
     updateSessionStatus('connected', `Connected with ${msg.handle}`);
+    updateLiveIndicator();
   }
 
   if (msg.type === 'leave') {
     toast(`${msg.handle} left the room`, 'mp');
     document.getElementById('friendDot').className = 'mp-status-dot waiting';
     updateSessionStatus('waiting', 'Friend disconnected — waiting…');
+    updateLiveIndicator();
   }
 
   if (msg.type === 'room_info') {
@@ -440,6 +446,77 @@ function copyInviteLink() {
 }
 
 // ============================================================
+// LIVE STATUS (solo vs multiplayer)
+// ============================================================
+const LIVE_TOOLTIP_SOLO =
+  'You are online — the dashboard imports posts you have seen on 𝕏. Single-player mode: you have not invited a friend into your lobby yet. Click to open Connection Settings.';
+const LIVE_TOOLTIP_MP =
+  'Multiplayer live — you and your friend are connected and sharing seen feeds.';
+
+function hasFriendInLobby() {
+  if (!mpConnected || !mpRoom) return false;
+  if (mpRoom.friendHandle) return true;
+  if (friendTweets.length > 0) return true;
+  const friendDot = document.getElementById('friendDot');
+  if (friendDot?.classList.contains('connected')) return true;
+  const friendFeed = document.getElementById('mpFriendFeed');
+  return Boolean(friendFeed?.querySelector('.tweet-card'));
+}
+
+function updateLiveIndicator() {
+  const dot = document.getElementById('liveDot');
+  const label = document.getElementById('liveLabel');
+  const wrap = document.getElementById('liveStatusWrap');
+  if (!dot || !label) return;
+
+  const mpLive = hasFriendInLobby();
+  const extensionContext = typeof chrome !== 'undefined' && chrome.storage;
+
+  if (mpLive) {
+    dot.style.background = 'var(--green)';
+    dot.classList.add('pulse');
+    label.textContent = 'live';
+    wrap?.classList.remove('live-solo');
+    wrap?.classList.add('live-multiplayer');
+    if (wrap) wrap.title = LIVE_TOOLTIP_MP;
+  } else {
+    dot.style.background = 'var(--red)';
+    dot.classList.remove('pulse');
+    label.textContent = extensionContext || allTweets.length > 0 ? 'solo' : 'offline';
+    wrap?.classList.add('live-solo');
+    wrap?.classList.remove('live-multiplayer');
+    if (wrap) wrap.title = LIVE_TOOLTIP_SOLO;
+  }
+}
+
+function goToConnectionSettings() {
+  document.querySelector('[data-page="multiplayer"]')?.click();
+  setTimeout(() => {
+    const body = document.getElementById('connSettingsBody');
+    const arrow = document.getElementById('connSettingsArrow');
+    if (body) body.classList.add('open');
+    if (arrow) arrow.textContent = '▴ collapse';
+    document.getElementById('connSettingsPanel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 120);
+}
+
+function setupLiveStatus() {
+  const wrap = document.getElementById('liveStatusWrap');
+  if (!wrap) return;
+  const onActivate = () => {
+    if (!hasFriendInLobby()) goToConnectionSettings();
+  };
+  wrap.addEventListener('click', onActivate);
+  wrap.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onActivate();
+    }
+  });
+  updateLiveIndicator();
+}
+
+// ============================================================
 // LIVE SYNC
 // ============================================================
 function startLiveSync() {
@@ -449,17 +526,17 @@ function startLiveSync() {
         if (!res.tweetHistory) return;
         const existingIds = new Set(allTweets.map(t => t.id));
         res.tweetHistory.filter(t => !existingIds.has(t.id)).forEach(t => handleNewTweet(t, 'mine'));
+        updateLiveIndicator();
       });
     }
-    // localStorage fallback polling for friend feed (same machine)
     if (mpRoom && (!ws || ws.readyState !== WebSocket.OPEN)) {
       pollFriendFeedLocalStorage();
       pollFlaggedLocalStorage();
     }
+    updateLiveIndicator();
   }, 2000);
 
-  document.getElementById('liveDot').style.background = 'var(--green)';
-  document.getElementById('liveLabel').textContent = 'live';
+  updateLiveIndicator();
 }
 
 function handleNewTweet(tweet, source) {
@@ -929,6 +1006,7 @@ function createRoom() {
       localStorage.setItem(LS_MP_ROOM, JSON.stringify(mpRoom));
       clearInterval(mpPollInterval);
       activateSession();
+      updateLiveIndicator();
       toast(`⚡ ${room.guestHandle} joined your room!`, 'mp');
     }
   }, 1000);
@@ -979,6 +1057,7 @@ function activateSession() {
     allTweets.slice(0, 30).forEach(t => myFeed.appendChild(buildMpTweetCard(t, false)));
   }
   renderFlaggedFeed();
+  updateLiveIndicator();
 }
 
 function disconnectRoom() {
@@ -1001,6 +1080,7 @@ function disconnectRoom() {
   document.getElementById('mpJoinBox').style.display = 'none';
   document.getElementById('mpJoinCode').value = '';
   toast('Disconnected from room');
+  updateLiveIndicator();
 }
 
 // ============================================================
