@@ -24,7 +24,9 @@ node server.js
 # → http://localhost:3000
 ```
 
-Open **http://localhost:3000** in Chrome — the **multiplayer tutorial** starts automatically on first launch.
+Open **http://localhost:3000** in Chrome (same browser as the extension) — the **multiplayer tutorial** starts automatically on first launch.
+
+**Troubleshooting:** If you only see demo posts, reload the extension at `chrome://extensions`, browse **x.com** for a few seconds, then refresh `localhost:3000`. Turn **Tutorial ON** (top right) to replay the walkthrough.
 
 Or open **`/path-where-you-downloaded-X-Multiplayer-replace-this-to-launch-it/x-multiplayer/dashboard/index.html`** (replace the prefix with your real folder). The extension **Open Dashboard** panel has **Copy** for `node server.js`, links to [source on GitHub](https://github.com/jimbrend/XMultiplayer), and **macOS / Linux / Windows** buttons to open `index.html` in a new tab.
 

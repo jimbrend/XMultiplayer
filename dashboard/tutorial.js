@@ -350,5 +350,18 @@
     }
   }
 
-  window.XTutorial = { init, start, toggleTutorial, setTutorialEnabled, unlockBrand };
+  function maybeStartAfterSync() {
+    if (!shouldAutoStart() || active) return;
+    setTimeout(() => start(0), 500);
+  }
+
+  window.XTutorial = {
+    init,
+    start,
+    toggleTutorial,
+    setTutorialEnabled,
+    unlockBrand,
+    maybeStartAfterSync,
+    shouldAutoStart,
+  };
 })();

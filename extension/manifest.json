@@ -1,16 +1,26 @@
 {
   "manifest_version": 3,
   "name": "𝕏 Multiplayer",
-  "version": "1.1",
+  "version": "1.2",
   "description": "Track seen posts, 𝕏 logo, multiplayer feeds — open x-multiplayer/dashboard locally",
   "permissions": ["activeTab", "storage", "scripting", "downloads", "tabs"],
-  "host_permissions": ["https://x.com/*", "https://twitter.com/*"],
+  "host_permissions": [
+    "https://x.com/*",
+    "https://twitter.com/*",
+    "http://localhost:3000/*",
+    "http://127.0.0.1:3000/*"
+  ],
   "content_scripts": [
     {
       "matches": ["https://x.com/*", "https://twitter.com/*"],
       "js": ["content.js"],
       "run_at": "document_end",
       "all_frames": true
+    },
+    {
+      "matches": ["http://localhost:3000/*", "http://127.0.0.1:3000/*"],
+      "js": ["dashboard-bridge.js"],
+      "run_at": "document_start"
     }
   ],
   "action": {

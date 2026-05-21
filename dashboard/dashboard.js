@@ -64,13 +64,58 @@ const LS_RELAY_URL  = 'xhistory_relay_url';
 const LS_MP_SYNC    = 'xhistory_mp_sync_seen';
 const LS_FLAGGED    = 'xhistory_flagged';
 
-// ---- BroadcastChannel (extension → dashboard, same browser) ----
+// ---- BroadcastChannel (extension → dashboard, same browser tab) ----
 try {
   const bc = new BroadcastChannel('xhistory_channel');
   bc.onmessage = (e) => {
     if (e.data.type === 'NEW_TWEET') handleNewTweet(e.data.data, 'mine');
   };
-} catch(e) {}
+} catch (e) {}
+
+let historyLoadSettled = false;
+let usedDemoFallback = false;
+
+function isDemoDataset(tweets) {
+  return tweets.length > 0 && tweets.every(t => String(t.id || '').startsWith('d'));
+}
+
+function applyExtensionHistory(history) {
+  if (!Array.isArray(history) || history.length === 0) return false;
+  if (isDemoDataset(history)) return false;
+
+  const existingIds = new Set(allTweets.map(t => t.id));
+  const isNew = history.length !== allTweets.length || history.some(t => !existingIds.has(t.id));
+
+  allTweets = history;
+  localStorage.setItem(LS_HISTORY, JSON.stringify(allTweets));
+  usedDemoFallback = false;
+
+  const banner = document.getElementById('demoBanner');
+  if (banner) banner.style.display = 'none';
+
+  renderFeed();
+  updateStats();
+  updateLiveIndicator();
+
+  if (!localStorage.getItem('xhistory_brand_unlocked')) {
+    window.applyXTheme?.();
+  }
+
+  if (isNew && window.XTutorial?.maybeStartAfterSync) {
+    window.XTutorial.maybeStartAfterSync();
+  }
+
+  return true;
+}
+
+window.addEventListener('xhistory-extension-sync', (e) => {
+  historyLoadSettled = true;
+  applyExtensionHistory(e.detail || []);
+});
+
+function requestExtensionSync() {
+  window.dispatchEvent(new Event('xhistory-request-sync'));
+}
 
 // ============================================================
 // BOOTSTRAP
@@ -136,31 +181,98 @@ function init() {
 // HISTORY LOADING
 // ============================================================
 function loadHistory() {
-  if (typeof chrome !== 'undefined' && chrome.storage) {
-    chrome.storage.local.get(['tweetHistory'], (res) => {
-      if (res.tweetHistory && res.tweetHistory.length > 0) {
-        allTweets = res.tweetHistory;
-        localStorage.setItem(LS_HISTORY, JSON.stringify(allTweets));
-        document.getElementById('demoBanner').style.display = 'none';
-      } else {
-        loadFromLocalStorage();
-      }
-      renderFeed(); updateStats();
-      updateLiveIndicator();
-    });
-  } else {
-    loadFromLocalStorage();
-  }
-}
-
-function loadFromLocalStorage() {
   const saved = localStorage.getItem(LS_HISTORY);
   if (saved) {
-    try { allTweets = JSON.parse(saved); } catch(e) { allTweets = []; }
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed.length > 0 && !isDemoDataset(parsed)) {
+        allTweets = parsed;
+        historyLoadSettled = true;
+        document.getElementById('demoBanner').style.display = 'none';
+        renderFeed();
+        updateStats();
+        updateLiveIndicator();
+        requestExtensionSync();
+        return;
+      }
+    } catch (e) { /* continue */ }
   }
-  if (allTweets.length === 0) injectDemoTweets();
-  else document.getElementById('demoBanner').style.display = 'none';
+
+  showWaitingForExtensionBanner();
+  requestExtensionSync();
+
+  setTimeout(() => {
+    if (historyLoadSettled || allTweets.length > 0) return;
+    loadFromLocalStorageOrDemo();
+  }, 1500);
+}
+
+function showWaitingForExtensionBanner() {
+  const banner = document.getElementById('demoBanner');
+  if (!banner) return;
+  banner.style.display = 'block';
+  banner.innerHTML = `
+    ⏳ <strong>Connecting to extension…</strong> Browse <strong>x.com</strong> with the 𝕏 Multiplayer extension enabled.
+    Seen posts sync here automatically when <code style="background:rgba(255,255,255,.06);padding:1px 6px;border-radius:3px">node server.js</code> is running at
+    <a href="http://localhost:3000" style="color:var(--blue)">localhost:3000</a>.
+    <button type="button" id="loadDemoBtn" style="margin-left:8px;padding:2px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--dim);cursor:pointer;font-size:10px">Load demo data</button>
+  `;
+  document.getElementById('loadDemoBtn')?.addEventListener('click', () => {
+    injectDemoTweets();
+    renderFeed();
+    updateStats();
+    historyLoadSettled = true;
+  });
+}
+
+function loadFromLocalStorageOrDemo() {
+  const saved = localStorage.getItem(LS_HISTORY);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed.length > 0 && !isDemoDataset(parsed)) {
+        allTweets = parsed;
+        document.getElementById('demoBanner').style.display = 'none';
+        renderFeed();
+        updateStats();
+        updateLiveIndicator();
+        historyLoadSettled = true;
+        return;
+      }
+    } catch (e) { allTweets = []; }
+  }
+
+  if (allTweets.length === 0) {
+    showNoExtensionBanner();
+    injectDemoTweets();
+    usedDemoFallback = true;
+    renderFeed();
+    updateStats();
+  } else {
+    document.getElementById('demoBanner').style.display = 'none';
+  }
+  historyLoadSettled = true;
   updateLiveIndicator();
+}
+
+function showNoExtensionBanner() {
+  const banner = document.getElementById('demoBanner');
+  if (!banner) return;
+  banner.style.display = 'block';
+  banner.innerHTML = `
+    ℹ️ <strong>No extension data yet.</strong> Install the extension from <code style="background:rgba(255,255,255,.06);padding:1px 6px;border-radius:3px">x-multiplayer/extension/</code>,
+    reload it at <code style="background:rgba(255,255,255,.06);padding:1px 6px;border-radius:3px">chrome://extensions</code>, browse <strong>x.com</strong> for 600ms+ on posts, then refresh this page.
+    Tutorial: turn <strong>Tutorial ON</strong> (top right). Press <kbd>Alt+X</kbd> on x.com to open the dashboard.
+    <button type="button" id="retrySyncBtn" style="margin-left:8px;padding:2px 10px;border-radius:6px;border:1px solid var(--blue);background:transparent;color:var(--blue);cursor:pointer;font-size:10px">Retry sync</button>
+  `;
+  document.getElementById('retrySyncBtn')?.addEventListener('click', () => {
+    historyLoadSettled = false;
+    showWaitingForExtensionBanner();
+    requestExtensionSync();
+    setTimeout(() => {
+      if (!historyLoadSettled && allTweets.length === 0) loadFromLocalStorageOrDemo();
+    }, 1500);
+  });
 }
 
 function injectDemoTweets() {
@@ -521,14 +633,7 @@ function setupLiveStatus() {
 // ============================================================
 function startLiveSync() {
   setInterval(() => {
-    if (typeof chrome !== 'undefined' && chrome.storage) {
-      chrome.storage.local.get(['tweetHistory'], (res) => {
-        if (!res.tweetHistory) return;
-        const existingIds = new Set(allTweets.map(t => t.id));
-        res.tweetHistory.filter(t => !existingIds.has(t.id)).forEach(t => handleNewTweet(t, 'mine'));
-        updateLiveIndicator();
-      });
-    }
+    requestExtensionSync();
     if (mpRoom && (!ws || ws.readyState !== WebSocket.OPEN)) {
       pollFriendFeedLocalStorage();
       pollFlaggedLocalStorage();
