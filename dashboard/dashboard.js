@@ -589,9 +589,10 @@ function pollFriendFeedLocalStorage() {
     if (feed) {
       const empty = feed.querySelector('.empty-state');
       if (empty) feed.innerHTML = '';
-      feed.insertBefore(buildMpTweetCard(tweet, true), feed.firstChild);
+      feed.insertBefore(buildMpTweetCard(tweet, true, mpRoom?.friendHandle), feed.firstChild);
     }
   });
+  updateLiveIndicator();
   // Push my tweets to shared storage
   const myFeedKey = mpRoom.role === 'host' ? 'hostFeed' : 'guestFeed';
   const myRoomFeed = room[myFeedKey] || [];
