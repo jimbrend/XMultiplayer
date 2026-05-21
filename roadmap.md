@@ -57,6 +57,35 @@ All features below are demoed in the Raindrop tab. Real API calls require a toke
 
 ---
 
+## 🔗 Keet — Authenticated 𝕏 API ([docs](https://docs.trykeet.com/overview/introduction))
+
+[Keet](https://docs.trykeet.com/overview/introduction) provides APIs for sites that do not expose public APIs — including **𝕏**. Users connect accounts via Keet Link (no Chrome extension required for your end users); Keet maintains authenticated sessions so your app can act on their behalf.
+
+### 🗺️ Coming soon (scaffold in dashboard — toggle disabled)
+
+Planned capabilities for this project:
+
+- **Connect 𝕏 via Keet Link** — replace or supplement extension-only tracking with server-side session access
+- **Sync timeline / likes / bookmarks** — pull history into the dashboard without scraping x.com in-browser
+- **Post on behalf of user** — e.g. `keetClient.integrations.x.post("…")` for digest or multiplayer highlights
+- **Cross-service flows** — same Keet session pattern as LinkedIn, Instagram, etc. (see [supported integrations](https://docs.trykeet.com/overview/introduction))
+
+**Placeholder in source:** `const KEET_API_KEY = ''; // TODO: from Keet dashboard`
+
+**Scaffold files:**
+
+- `dashboard/dashboard.js` — `setupKeet()`, `connectKeet()`, `syncKeetXHistory()` (stubs; UI toggle shows **Coming Soon**)
+- `dashboard/keet-scaffold.js` — commented client examples for when the integration ships
+
+**Implementation notes:**
+
+1. Add Keet API key at top of `dashboard.js` (never commit real keys)
+2. Wire Keet Link component for OAuth-style account linking
+3. Map Keet 𝕏 responses into existing `allTweets` / history storage shape
+4. Enable the **Keet** header tab toggle once `connectKeet()` is implemented
+
+---
+
 ## 🤖 AI Features (Claude API)
 
 - **Auto-summarize posts** — 1-sentence digest of long threads
@@ -85,8 +114,7 @@ All features below are demoed in the Raindrop tab. Real API calls require a toke
 
 Source code lives here — fork, PR, or open issues:
 
-> **[github.com/YOUR_USERNAME/x-history-app](https://github.com/YOUR_USERNAME/x-history-app)**
-> *(update this URL when you push to GitHub)*
+> **[github.com/jimbrend/XMultiplayer](https://github.com/jimbrend/XMultiplayer)**
 
 ### To add a relay option:
 1. Implement `connectWebSocket(url)` and `disconnectWebSocket()` in `dashboard.js`

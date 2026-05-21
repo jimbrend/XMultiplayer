@@ -22,6 +22,10 @@ const SUPABASE_ANON_KEY = '';  // TODO
 // Raindrop (demo mode until key added)
 const RAINDROP_API_KEY = ''; // TODO: from https://app.raindrop.io/settings/integrations
 
+// Keet — authenticated 𝕏 API (coming soon — see roadmap.md)
+const KEET_API_KEY = ''; // TODO: from Keet dashboard — https://docs.trykeet.com/overview/introduction
+const KEET_ENABLED = false; // flip when connectKeet() is implemented
+
 // ============================================================
 // STATE
 // ============================================================
@@ -69,6 +73,7 @@ function init() {
   setupMultiplayer();
   setupConnectionSettings();
   setupRaindrop();
+  setupKeet();
   setupClear();
   startLiveSync();
 
@@ -77,6 +82,11 @@ function init() {
   if (rdApiKey) {
     const el = document.getElementById('rdApiKey');
     if (el) el.value = rdApiKey;
+  }
+  const savedKeetKey = localStorage.getItem('xhistory_keet_key');
+  if (savedKeetKey) {
+    const keetEl = document.getElementById('keetApiKey');
+    if (keetEl) keetEl.value = savedKeetKey;
   }
 
   // Auto-connect relay if previously active
@@ -570,7 +580,7 @@ function setupNav() {
       document.querySelectorAll('.header-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      const map = { myFeed:'myFeedPage', multiplayer:'multiplayerPage', raindrop:'raindropPage' };
+      const map = { myFeed:'myFeedPage', multiplayer:'multiplayerPage', raindrop:'raindropPage', keet:'keetPage' };
       document.getElementById(map[btn.dataset.page])?.classList.add('active');
       document.getElementById('sidebar').style.display = btn.dataset.page === 'myFeed' ? 'flex' : 'none';
     });
@@ -783,6 +793,69 @@ function setupRaindrop() {
     document.querySelectorAll('.rd-card').forEach(c => c.classList.remove('placeholder'));
     toast('💧 Raindrop connected!');
   });
+}
+
+// ============================================================
+// KEET — coming soon (https://docs.trykeet.com/overview/introduction)
+// ============================================================
+function setupKeet() {
+  const toggle = document.getElementById('keetComingSoonToggle');
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      toast('🔗 Keet integration coming soon — see roadmap.md');
+    });
+  }
+
+  document.querySelectorAll('[data-keet-action]').forEach(btn => {
+    btn.addEventListener('click', () => handleKeetAction(btn.dataset.keetAction));
+  });
+
+  document.getElementById('keetApiSave')?.addEventListener('click', () => {
+    const key = document.getElementById('keetApiKey')?.value.trim();
+    if (!key) {
+      toast('Enter a Keet API key (optional until integration ships)');
+      return;
+    }
+    localStorage.setItem('xhistory_keet_key', key);
+    toast('Keet key saved locally — integration coming soon');
+  });
+}
+
+/** @returns {boolean} whether Keet is wired up (always false until KEET_ENABLED) */
+function isKeetActive() {
+  return KEET_ENABLED && Boolean(KEET_API_KEY || localStorage.getItem('xhistory_keet_key'));
+}
+
+async function connectKeet() {
+  if (!isKeetActive()) {
+    toast('🔗 Keet: coming soon — connect via Keet Link when shipped');
+    return false;
+  }
+  // TODO: Keet Link + session — see dashboard/keet-scaffold.js
+  console.log('[Keet scaffold] connectKeet()');
+  return false;
+}
+
+async function syncKeetXHistory() {
+  if (!isKeetActive()) {
+    toast('🔗 Keet sync coming soon');
+    return [];
+  }
+  // TODO: keet.integrations.x → map into allTweets
+  console.log('[Keet scaffold] syncKeetXHistory()');
+  return [];
+}
+
+function handleKeetAction(id) {
+  const msgs = {
+    'link-x': 'Keet Link — user connects 𝕏 without a Chrome extension',
+    'sync-history': `Would merge server-side 𝕏 history into your ${allTweets.length} seen posts`,
+    'sync-likes': 'Would pull liked posts via Keet authenticated session',
+    'post-digest': 'Would post a digest via keet.integrations.x.post(...)',
+    'mp-highlight': 'Would post multiplayer highlight to 𝕏 on your behalf',
+  };
+  toast(`🔗 Coming soon: ${msgs[id] || 'Keet action'}`);
+  console.log('[Keet scaffold]', id, '→ https://docs.trykeet.com/overview/introduction');
 }
 
 function handleRdAction(id) {

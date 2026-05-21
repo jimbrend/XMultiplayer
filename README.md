@@ -88,6 +88,10 @@ See `roadmap.md` and the **Other Options** tabs inside Connection Settings for:
 
 None of these have API keys in source yet. See `roadmap.md` for implementation notes and placeholders.
 
+## Keet (coming soon)
+
+[Keet](https://docs.trykeet.com/overview/introduction) — authenticated APIs for 𝕏 (connect via Keet Link, act on users’ behalf). Open the **🔗 Keet** tab in the dashboard; the enable toggle is **Coming soon** until `KEET_ENABLED` is wired up. See `roadmap.md` and `dashboard/keet-scaffold.js`.
+
 ---
 
 ## File Structure
@@ -108,6 +112,7 @@ x-history-app/
 ├── local-relay.js          Local WebSocket relay (node local-relay.js)
 ├── server.js               Static file server for dashboard
 ├── roadmap.md              Planned features + integration placeholders
+├── dashboard/keet-scaffold.js  Keet API examples (not loaded yet)
 └── README.md
 ```
 

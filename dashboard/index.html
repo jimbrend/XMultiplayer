@@ -166,6 +166,28 @@
     .pros-cons .pros { color:var(--green); }
     .pros-cons .cons { color:#ff8844; }
     .roadmap-notice { display:inline-flex; align-items:center; gap:5px; background:rgba(255,200,0,.08); border:1px solid rgba(255,200,0,.2); border-radius:20px; padding:2px 10px; font-size:10px; color:#ffc800; }
+    .coming-soon-notice { display:inline-flex; align-items:center; gap:5px; background:rgba(29,155,240,.1); border:1px solid rgba(29,155,240,.25); border-radius:20px; padding:2px 10px; font-size:10px; color:var(--blue); }
+
+    /* Keet integration page */
+    .keet-banner { padding:24px; border-bottom:1px solid var(--border); background:linear-gradient(180deg,rgba(29,155,240,.08) 0%,transparent 100%); }
+    .keet-banner h2 { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; margin-bottom:8px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .keet-banner p { font-size:12px; color:var(--dim); line-height:1.7; max-width:640px; }
+    .keet-toggle-row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin:16px 0; }
+    .keet-coming-toggle {
+      display:flex; align-items:center; gap:10px;
+      background:var(--card); border:1px solid var(--border);
+      border-radius:10px; padding:12px 18px; cursor:pointer;
+      opacity:.85; transition:border-color .2s;
+      font-family:'DM Mono',monospace;
+    }
+    .keet-coming-toggle:hover { border-color:var(--blue); }
+    .keet-coming-toggle .relay-status-text { color:#ffc800; font-weight:700; }
+    .keet-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; padding:0 24px 24px; }
+    .keet-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; border-left:3px solid var(--blue); opacity:.75; }
+    .keet-card h4 { font-family:'Syne',sans-serif; font-size:13px; margin-bottom:8px; }
+    .keet-card p { font-size:11px; color:var(--dim); line-height:1.6; margin-bottom:12px; }
+    .keet-btn { padding:6px 14px; border-radius:6px; font-size:11px; font-family:'Syne',sans-serif; font-weight:700; cursor:pointer; border:1px solid var(--border); background:transparent; color:var(--dim); }
+    .keet-btn:hover { border-color:var(--blue); color:var(--blue); }
     .source-link { font-size:10px; color:var(--blue); text-decoration:none; }
     .source-link:hover { text-decoration:underline; }
     .input-row { display:flex; gap:8px; align-items:center; margin-top:8px; }
@@ -247,6 +269,7 @@
     <button class="header-tab active" data-page="myFeed">My Feed</button>
     <button class="header-tab mp-tab" data-page="multiplayer">⚡ Multiplayer</button>
     <button class="header-tab" data-page="raindrop">💧 Raindrop</button>
+    <button class="header-tab" data-page="keet">🔗 Keet</button>
   </div>
   <div class="header-right">
     <div class="live-dot" id="liveDot"></div>
@@ -570,6 +593,71 @@
 
     </div>
   </div><!-- /multiplayerPage -->
+
+  <!-- KEET PAGE -->
+  <div class="page" id="keetPage" style="flex-direction:column">
+    <div style="flex:1;overflow-y:auto">
+      <div class="keet-banner">
+        <h2>🔗 Keet <span class="coming-soon-notice">Coming soon</span></h2>
+        <p>
+          <a href="https://docs.trykeet.com/overview/introduction" target="_blank" style="color:var(--blue)">Keet</a>
+          provides authenticated APIs for 𝕏 and other sites — users connect via Keet Link, no extension required for them.
+          Session maintenance and API abstractions are handled by Keet.
+        </p>
+        <div class="keet-toggle-row">
+          <div class="keet-coming-toggle" id="keetComingSoonToggle" title="Integration not available yet">
+            <div class="relay-indicator" style="background:#ffc800"></div>
+            <div class="relay-main">
+              <div class="relay-name">Enable Keet</div>
+              <div class="relay-desc">Authenticated 𝕏 API · scaffold only</div>
+            </div>
+            <div class="relay-status-text">SOON</div>
+          </div>
+          <span style="font-size:11px;color:var(--dim)">Toggle is disabled until <code style="background:rgba(255,255,255,.06);padding:1px 6px;border-radius:3px">KEET_ENABLED</code> in dashboard.js</span>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;max-width:560px">
+          <label style="font-size:11px;color:var(--dim);letter-spacing:1px">KEET API KEY (placeholder)</label>
+          <input type="password" class="small-input" id="keetApiKey" placeholder="Save for later — not used until integration ships" style="width:100%;margin-top:8px;padding:8px 12px">
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <button class="small-btn outline" id="keetApiSave">Save locally</button>
+            <a href="https://docs.trykeet.com/overview/introduction" target="_blank" style="text-decoration:none"><button class="small-btn">Keet docs ↗</button></a>
+            <a href="https://github.com/jimbrend/XMultiplayer/blob/main/roadmap.md" target="_blank" style="text-decoration:none"><button class="small-btn outline">roadmap.md ↗</button></a>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:var(--dim);font-family:'DM Mono',monospace">
+            const KEET_API_KEY = ''; // TODO<br>
+            // See dashboard/keet-scaffold.js
+          </div>
+        </div>
+      </div>
+      <div class="keet-grid">
+        <div class="keet-card">
+          <h4>Connect 𝕏 via Keet Link</h4>
+          <p>End users authenticate with Keet’s link component — Keet maintains the session.</p>
+          <button class="keet-btn" data-keet-action="link-x">Preview flow</button>
+        </div>
+        <div class="keet-card">
+          <h4>Sync server-side history</h4>
+          <p>Pull timeline, likes, and bookmarks into this dashboard without extension-only scraping.</p>
+          <button class="keet-btn" data-keet-action="sync-history">Preview sync</button>
+        </div>
+        <div class="keet-card">
+          <h4>Sync likes</h4>
+          <p>Merge Keet-fetched liked posts with your Seen + Liked filter.</p>
+          <button class="keet-btn" data-keet-action="sync-likes">Preview sync</button>
+        </div>
+        <div class="keet-card">
+          <h4>Post digest</h4>
+          <p>Example: <code style="font-size:10px">integrations.x.post("…")</code> for weekly summaries.</p>
+          <button class="keet-btn" data-keet-action="post-digest">Preview post</button>
+        </div>
+        <div class="keet-card" style="border-left-color:var(--mp-accent)">
+          <h4>Multiplayer highlight</h4>
+          <p>Share a room highlight to 𝕏 on the user’s behalf after a multiplayer session.</p>
+          <button class="keet-btn" data-keet-action="mp-highlight">Preview post</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- RAINDROP PAGE -->
   <div class="page" id="raindropPage" style="flex-direction:column">
