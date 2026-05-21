@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>𝕏 History Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #000; --white: #fff; --dim: #8a8a8a; --dimmer: #3a3a3a;
+      --card: #0d0d0d; --border: #1f1f1f; --accent: #fff;
+      --blue: #1d9bf0; --green: #00ba7c; --red: #f4212e;
+      --gold: #ffd700; --mp-accent: #7c3aed; --mp-bg: rgba(124,58,237,0.06);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:var(--black); color:var(--white); font-family:'DM Mono',monospace; min-height:100vh; overflow-x:hidden; }
+
+    /* HEADER */
+    .header {
+      position:sticky; top:0; z-index:100;
+      background:rgba(0,0,0,0.92); backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 24px; height:56px;
+    }
+    .header-logo { font-family:'Syne',sans-serif; font-weight:800; font-size:20px; display:flex; align-items:center; gap:10px; }
+    .header-logo .x-glyph { font-size:22px; background:var(--white); color:var(--black); width:34px; height:34px; display:flex; align-items:center; justify-content:center; border-radius:8px; }
+    .header-tabs { display:flex; gap:2px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:3px; }
+    .header-tab { padding:5px 16px; border-radius:7px; cursor:pointer; font-family:'Syne',sans-serif; font-size:12px; font-weight:600; letter-spacing:.5px; transition:all .15s; border:none; background:transparent; color:var(--dim); }
+    .header-tab.active { background:var(--white); color:var(--black); }
+    .header-tab.mp-tab { color:var(--mp-accent); border:1px solid rgba(124,58,237,.4); }
+    .header-tab.mp-tab.active { background:var(--mp-accent); color:var(--white); border-color:var(--mp-accent); }
+    .header-right { display:flex; align-items:center; gap:10px; }
+    .live-dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+    .live-label { font-size:11px; color:var(--dim); }
+
+    /* LAYOUT */
+    .main { display:flex; height:calc(100vh - 56px); }
+
+    /* SIDEBAR */
+    .sidebar { width:240px; flex-shrink:0; border-right:1px solid var(--border); display:flex; flex-direction:column; padding:20px 0; }
+    .sidebar-section { padding:0 16px 20px; }
+    .sidebar-label { font-size:10px; letter-spacing:1.5px; color:var(--dim); margin-bottom:10px; font-family:'Syne',sans-serif; font-weight:700; }
+    .stat-block { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:8px; }
+    .stat-block .num { font-size:28px; font-weight:700; font-family:'Syne',sans-serif; line-height:1; }
+    .stat-block .lbl { font-size:10px; color:var(--dim); margin-top:4px; letter-spacing:1px; }
+    .stat-row { display:flex; gap:8px; }
+    .stat-row .stat-block { flex:1; }
+    .stat-row .stat-block .num { font-size:20px; }
+    .filter-btn { width:100%; text-align:left; background:transparent; border:1px solid var(--border); border-radius:8px; color:var(--dim); padding:8px 12px; cursor:pointer; font-family:'DM Mono',monospace; font-size:12px; margin-bottom:6px; transition:all .15s; display:flex; align-items:center; gap:8px; }
+    .filter-btn:hover { border-color:var(--dimmer); color:var(--white); }
+    .filter-btn.active { border-color:var(--white); color:var(--white); background:rgba(255,255,255,.05); }
+    .filter-btn .dot { width:6px; height:6px; border-radius:50%; background:var(--dim); flex-shrink:0; }
+    .filter-btn.active .dot { background:var(--white); }
+    .filter-btn.liked .dot { background:var(--red); }
+    .filter-btn.liked.active { border-color:var(--red); color:var(--red); background:rgba(244,33,46,.07); }
+    .filter-btn.bookmarked .dot { background:var(--blue); }
+    .filter-btn.bookmarked.active { border-color:var(--blue); color:var(--blue); background:rgba(29,155,240,.07); }
+    .search-box { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:8px 12px; display:flex; align-items:center; gap:8px; margin:0 16px 20px; }
+    .search-box input { background:transparent; border:none; outline:none; color:var(--white); font-family:'DM Mono',monospace; font-size:12px; width:100%; }
+    .search-box input::placeholder { color:var(--dim); }
+    .sidebar-footer { margin-top:auto; padding:16px; border-top:1px solid var(--border); }
+    .clear-btn { width:100%; padding:8px; border-radius:8px; border:1px solid rgba(255,68,68,.3); background:transparent; color:#ff4444; cursor:pointer; font-family:'DM Mono',monospace; font-size:11px; transition:all .15s; }
+    .clear-btn:hover { background:rgba(255,68,68,.1); }
+
+    /* PAGES */
+    .page { display:none; flex:1; overflow:hidden; }
+    .page.active { display:flex; }
+    .feed-panel { flex:1; overflow-y:auto; padding:20px; }
+    .feed-panel::-webkit-scrollbar { width:4px; }
+    .feed-panel::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+    /* TWEET CARD */
+    .tweet-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px; transition:border-color .2s; cursor:pointer; animation:slideIn .25s ease; }
+    @keyframes slideIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+    .tweet-card:hover { border-color:var(--dimmer); }
+    .tweet-card.new-tweet { border-color:var(--white); animation:newFlash .6s ease forwards,slideIn .25s ease; }
+    @keyframes newFlash { 0%{border-color:var(--white);box-shadow:0 0 12px rgba(255,255,255,.2)} 100%{border-color:var(--border);box-shadow:none} }
+    .tweet-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .tweet-avatar { width:36px; height:36px; border-radius:50%; background:var(--dimmer); flex-shrink:0; object-fit:cover; }
+    .tweet-avatar-placeholder { width:36px; height:36px; border-radius:50%; background:var(--dimmer); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--dim); }
+    .tweet-meta { flex:1; min-width:0; }
+    .tweet-author { font-family:'Syne',sans-serif; font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tweet-handle { font-size:11px; color:var(--dim); }
+    .tweet-time { font-size:10px; color:var(--dim); flex-shrink:0; }
+    .tweet-text { font-size:13px; line-height:1.6; color:#d0d0d0; margin-bottom:10px; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; }
+    .tweet-badges { display:flex; gap:6px; flex-wrap:wrap; }
+    .badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:20px; font-size:10px; letter-spacing:.5px; }
+    .badge.liked { background:rgba(244,33,46,.12); color:var(--red); border:1px solid rgba(244,33,46,.25); }
+    .badge.bookmarked { background:rgba(29,155,240,.12); color:var(--blue); border:1px solid rgba(29,155,240,.25); }
+    .badge.seen { background:rgba(255,255,255,.05); color:var(--dim); border:1px solid var(--border); }
+    .tweet-link-btn { margin-top:8px; display:inline-flex; align-items:center; gap:4px; font-size:10px; color:var(--dim); text-decoration:none; transition:color .15s; }
+    .tweet-link-btn:hover { color:var(--white); }
+    .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:80px 40px; text-align:center; }
+    .empty-x { font-size:56px; margin-bottom:20px; opacity:.15; }
+    .empty-title { font-family:'Syne',sans-serif; font-size:18px; margin-bottom:8px; }
+    .empty-desc { color:var(--dim); font-size:12px; line-height:1.7; max-width:280px; }
+    .demo-banner { background:rgba(255,200,0,.08); border:1px solid rgba(255,200,0,.2); border-radius:8px; padding:10px 16px; font-size:11px; color:#ffc800; margin-bottom:16px; line-height:1.6; }
+
+    /* =====================
+       MULTIPLAYER
+    ===================== */
+    .mp-header { padding:20px 24px 0; border-bottom:1px solid var(--border); background:linear-gradient(180deg,rgba(124,58,237,.08) 0%,transparent 100%); }
+    .mp-title { font-family:'Syne',sans-serif; font-weight:800; font-size:22px; display:flex; align-items:center; gap:12px; padding-bottom:16px; }
+    .mp-badge { background:var(--mp-accent); color:white; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+
+    /* Connection settings panel */
+    .conn-settings {
+      border-bottom:1px solid var(--border);
+      background:var(--mp-bg);
+    }
+    .conn-settings-header {
+      padding:12px 24px; cursor:pointer;
+      display:flex; align-items:center; gap:10px;
+      font-family:'Syne',sans-serif; font-weight:700; font-size:13px;
+      user-select:none;
+    }
+    .conn-settings-header:hover { background:rgba(124,58,237,.08); }
+    .conn-settings-body { display:none; padding:0 24px 20px; }
+    .conn-settings-body.open { display:block; }
+
+    /* Relay toggle pills */
+    .relay-options { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; margin-top:12px; }
+    .relay-option-btn {
+      display:flex; align-items:center; gap:10px;
+      background:var(--card); border:1px solid var(--border);
+      border-radius:10px; padding:10px 16px; cursor:pointer;
+      transition:all .2s; min-width:180px;
+      font-family:'DM Mono',monospace;
+    }
+    .relay-option-btn:hover { border-color:var(--mp-accent); }
+    .relay-option-btn.relay-active { border-color:var(--mp-accent); background:rgba(124,58,237,.1); }
+    .relay-indicator { width:10px; height:10px; border-radius:50%; background:var(--dimmer); flex-shrink:0; transition:background .3s; }
+    .relay-main { flex:1; }
+    .relay-name { font-size:13px; font-weight:500; color:var(--white); }
+    .relay-desc { font-size:10px; color:var(--dim); margin-top:2px; }
+    .relay-status-text { font-size:10px; font-weight:700; color:var(--dim); letter-spacing:.5px; }
+    .relay-option-btn.relay-active .relay-status-text { color:var(--green); }
+
+    /* Relay status bar */
+    #relayStatusBar {
+      display:none; align-items:center; gap:8px;
+      padding:8px 24px; background:rgba(0,186,124,.05);
+      border-top:1px solid rgba(0,186,124,.15);
+      font-size:11px; color:var(--dim);
+    }
+    #relayStatusDot { width:7px; height:7px; border-radius:50%; background:var(--dim); transition:background .3s; }
+
+    /* Connection options tabs */
+    .conn-tabs { display:flex; gap:2px; background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:8px; padding:3px; width:fit-content; margin-bottom:14px; }
+    .conn-tab { padding:4px 14px; border-radius:5px; cursor:pointer; font-size:11px; font-family:'Syne',sans-serif; font-weight:600; color:var(--dim); border:none; background:transparent; transition:all .15s; letter-spacing:.3px; }
+    .conn-tab.active { background:var(--white); color:var(--black); }
+    .conn-panel { display:none; }
+    .conn-panel.default { display:block; }
+
+    .other-relay-card {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:10px; padding:14px; margin-bottom:10px;
+      border-left:3px solid var(--mp-accent);
+    }
+    .other-relay-card h5 { font-family:'Syne',sans-serif; font-size:13px; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+    .other-relay-card p { font-size:11px; color:var(--dim); line-height:1.7; margin-bottom:8px; }
+    .other-relay-card .pros-cons { display:flex; gap:12px; margin-bottom:10px; font-size:10px; }
+    .pros-cons .pros { color:var(--green); }
+    .pros-cons .cons { color:#ff8844; }
+    .roadmap-notice { display:inline-flex; align-items:center; gap:5px; background:rgba(255,200,0,.08); border:1px solid rgba(255,200,0,.2); border-radius:20px; padding:2px 10px; font-size:10px; color:#ffc800; }
+    .source-link { font-size:10px; color:var(--blue); text-decoration:none; }
+    .source-link:hover { text-decoration:underline; }
+    .input-row { display:flex; gap:8px; align-items:center; margin-top:8px; }
+    .small-input { background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:6px; padding:6px 10px; color:var(--white); font-family:'DM Mono',monospace; font-size:11px; outline:none; flex:1; transition:border-color .2s; }
+    .small-input:focus { border-color:var(--mp-accent); }
+    .small-btn { padding:6px 14px; border-radius:6px; font-size:11px; font-family:'Syne',sans-serif; font-weight:700; cursor:pointer; border:none; background:var(--mp-accent); color:white; white-space:nowrap; transition:opacity .2s; }
+    .small-btn:hover { opacity:.85; }
+    .small-btn.outline { background:transparent; border:1px solid var(--mp-accent); color:var(--mp-accent); }
+
+    /* MP setup */
+    .mp-setup { padding:24px; max-width:560px; }
+    .mp-setup h3 { font-family:'Syne',sans-serif; margin-bottom:16px; font-size:16px; }
+    .mp-input-group { margin-bottom:14px; }
+    .mp-input-group label { display:block; font-size:11px; color:var(--dim); margin-bottom:6px; letter-spacing:1px; }
+    .mp-input { width:100%; background:var(--card); border:1px solid var(--border); border-radius:8px; padding:10px 14px; color:var(--white); font-family:'DM Mono',monospace; font-size:13px; outline:none; transition:border-color .2s; }
+    .mp-input:focus { border-color:var(--mp-accent); }
+    .mp-btn { background:var(--mp-accent); color:white; border:none; padding:10px 24px; border-radius:8px; cursor:pointer; font-family:'Syne',sans-serif; font-weight:700; font-size:13px; transition:opacity .2s; }
+    .mp-btn:hover { opacity:.85; }
+    .mp-btn.secondary { background:transparent; border:1px solid var(--mp-accent); color:var(--mp-accent); margin-left:8px; }
+    .invite-code-box { background:var(--card); border:1px solid var(--mp-accent); border-radius:10px; padding:16px; margin-top:16px; }
+    .invite-code-box .code { font-size:28px; letter-spacing:10px; font-family:'Syne',sans-serif; font-weight:800; color:var(--mp-accent); text-align:center; padding:14px; background:rgba(124,58,237,.1); border-radius:8px; margin-bottom:10px; cursor:pointer; }
+    .invite-url { font-size:11px; color:var(--dim); word-break:break-all; margin-top:8px; display:none; }
+    .invite-actions { display:flex; gap:8px; margin-top:12px; }
+
+    /* MP session */
+    .mp-status-bar { padding:10px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; font-size:11px; color:var(--dim); }
+    .mp-status-dot { width:6px; height:6px; border-radius:50%; }
+    .mp-status-dot.connected { background:var(--green); animation:pulse 2s infinite; }
+    .mp-status-dot.waiting { background:var(--gold); }
+    .mp-status-dot.offline { background:var(--dim); }
+    .mp-feeds { display:flex; flex:1; overflow:hidden; }
+    .mp-col { flex:1; display:flex; flex-direction:column; border-right:1px solid var(--border); overflow:hidden; }
+    .mp-col:last-child { border-right:none; }
+    .mp-col-header { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; flex-shrink:0; }
+    .mp-col-title { font-family:'Syne',sans-serif; font-weight:700; font-size:14px; }
+    .mp-col-handle { color:var(--dim); font-size:11px; }
+    .mp-col-feed { flex:1; overflow-y:auto; padding:14px; }
+    .mp-col-feed::-webkit-scrollbar { width:3px; }
+    .mp-col-feed::-webkit-scrollbar-thumb { background:var(--border); }
+    .mp-col.friend-col .tweet-card { border-color:rgba(124,58,237,.25); }
+    .mp-col.friend-col .tweet-card:hover { border-color:rgba(124,58,237,.5); }
+
+    /* RAINDROP */
+    .rd-banner { background:linear-gradient(135deg,#1a2a3a 0%,#0d1a2a 100%); border-bottom:1px solid #1e3a5f; padding:28px 32px; }
+    .rd-banner h2 { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; display:flex; align-items:center; gap:12px; margin-bottom:6px; flex-wrap:wrap; }
+    .rd-banner p { color:#7096b8; font-size:12px; }
+    .api-badge { background:rgba(255,200,0,.15); color:#ffc800; border:1px solid rgba(255,200,0,.3); padding:3px 10px; border-radius:20px; font-size:10px; }
+    .rd-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; padding:24px; }
+    .rd-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px; border-left:3px solid var(--blue); transition:opacity .2s; }
+    .rd-card.placeholder { opacity:.55; }
+    .rd-card h4 { font-family:'Syne',sans-serif; font-size:14px; margin-bottom:6px; }
+    .rd-card p { color:var(--dim); font-size:11px; line-height:1.6; }
+    .rd-card .rd-action { margin-top:12px; display:flex; gap:8px; align-items:center; }
+    .rd-btn { padding:6px 14px; border-radius:6px; font-size:11px; font-family:'DM Mono',monospace; cursor:pointer; border:1px solid var(--blue); color:var(--blue); background:transparent; transition:all .15s; }
+    .rd-btn:hover { background:rgba(29,155,240,.1); }
+    .rd-btn.disabled { opacity:.4; cursor:default; pointer-events:none; }
+    .rd-api-input { width:100%; background:var(--card); border:1px solid var(--border); border-radius:8px; padding:10px 14px; color:var(--white); font-family:'DM Mono',monospace; font-size:12px; outline:none; margin-top:8px; transition:border-color .2s; }
+    .rd-api-input:focus { border-color:var(--blue); }
+
+    /* TOASTS */
+    .toast-container { position:fixed; bottom:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+    .toast { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px; font-size:12px; max-width:300px; animation:toastIn .3s ease; pointer-events:all; }
+    .toast.mp { border-color:var(--mp-accent); }
+    @keyframes toastIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">
+    <div class="x-glyph">𝕏</div>
+    <span>History</span>
+  </div>
+  <div class="header-tabs">
+    <button class="header-tab active" data-page="myFeed">My Feed</button>
+    <button class="header-tab mp-tab" data-page="multiplayer">⚡ Multiplayer</button>
+    <button class="header-tab" data-page="raindrop">💧 Raindrop</button>
+  </div>
+  <div class="header-right">
+    <div class="live-dot" id="liveDot"></div>
+    <span class="live-label" id="liveLabel">connecting…</span>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">STATS</div>
+      <div class="stat-block">
+        <div class="num" id="totalCount">0</div>
+        <div class="lbl">POSTS SEEN</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-block"><div class="num" id="likedStatCount" style="color:var(--red)">0</div><div class="lbl">LIKED</div></div>
+        <div class="stat-block"><div class="num" id="bookmarkStatCount" style="color:var(--blue)">0</div><div class="lbl">SAVED</div></div>
+      </div>
+    </div>
+    <div class="search-box">
+      <span style="color:var(--dim);font-size:12px">⌕</span>
+      <input type="text" id="searchInput" placeholder="search posts…">
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">FILTER</div>
+      <button class="filter-btn active" data-filter="all">
+        <span class="dot"></span> All Seen
+        <span style="margin-left:auto;font-size:10px;color:var(--dim)" id="countAll">0</span>
+      </button>
+      <button class="filter-btn liked" data-filter="liked">
+        <span class="dot"></span> Seen + Liked
+        <span style="margin-left:auto;font-size:10px;color:var(--dim)" id="countLiked">0</span>
+      </button>
+      <button class="filter-btn bookmarked" data-filter="bookmarked">
+        <span class="dot"></span> Seen + Bookmarked
+        <span style="margin-left:auto;font-size:10px;color:var(--dim)" id="countBookmarked">0</span>
+      </button>
+    </div>
+    <div class="sidebar-footer">
+      <button class="clear-btn" id="clearHistoryBtn">Clear all history</button>
+    </div>
+  </aside>
+
+  <!-- MY FEED PAGE -->
+  <div class="page active" id="myFeedPage">
+    <div class="feed-panel" id="mainFeed">
+      <div class="demo-banner" id="demoBanner">
+        ℹ️ <strong>Demo mode:</strong> No extension data detected. Install the Chrome extension and browse <strong>x.com</strong> to populate your real history. Press <kbd>Alt+X</kbd> on x.com to open this dashboard.
+      </div>
+    </div>
+  </div>
+
+  <!-- MULTIPLAYER PAGE -->
+  <div class="page" id="multiplayerPage" style="flex-direction:column">
+
+    <div class="mp-header">
+      <div class="mp-title">
+        ⚡ Multiplayer Feed
+        <span class="mp-badge" id="mpStatusBadge">OFFLINE</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         CONNECTION SETTINGS — always visible
+    ═══════════════════════════════════════ -->
+    <div class="conn-settings">
+      <div class="conn-settings-header" id="connSettingsToggle">
+        <span style="font-size:16px">⚙</span>
+        <span>Connection Settings</span>
+        <span style="margin-left:auto;color:var(--dim);font-size:11px" id="connSettingsArrow">▾ expand</span>
+      </div>
+      <div class="conn-settings-body" id="connSettingsBody">
+
+        <!-- Relay toggles -->
+        <div class="sidebar-label" style="margin-top:4px">RELAY — TURN ON TO ENABLE CROSS-INTERNET MULTIPLAYER</div>
+        <div class="relay-options">
+
+          <!-- PartyKit -->
+          <div class="relay-option-btn" data-relay="partykit">
+            <div class="relay-indicator"></div>
+            <div class="relay-main">
+              <div class="relay-name">PartyKit</div>
+              <div class="relay-desc">Free · cross-internet · recommended</div>
+            </div>
+            <div class="relay-status-text">OFF</div>
+          </div>
+
+          <!-- Local relay -->
+          <div class="relay-option-btn" data-relay="local">
+            <div class="relay-indicator"></div>
+            <div class="relay-main">
+              <div class="relay-name">Local Relay</div>
+              <div class="relay-desc">Same network only · no setup</div>
+            </div>
+            <div class="relay-status-text">OFF</div>
+          </div>
+
+          <!-- Custom -->
+          <div class="relay-option-btn" data-relay="custom">
+            <div class="relay-indicator"></div>
+            <div class="relay-main">
+              <div class="relay-name">Custom WSS</div>
+              <div class="relay-desc">Your own server</div>
+            </div>
+            <div class="relay-status-text">OFF</div>
+          </div>
+
+        </div>
+
+        <!-- Local relay URL input -->
+        <div id="localRelayConfig" style="margin-bottom:12px">
+          <div style="font-size:10px;color:var(--dim);margin-bottom:6px;letter-spacing:1px">LOCAL RELAY HOST (default: localhost:8080)</div>
+          <div class="input-row">
+            <input type="text" class="small-input" id="localRelayUrl" placeholder="192.168.1.X:8080 — your LAN IP for friends on same wifi">
+            <button class="small-btn outline" onclick="document.querySelector('[data-relay=local]').click()">Apply</button>
+          </div>
+          <div style="font-size:10px;color:var(--dim);margin-top:6px">
+            Run <code style="background:rgba(255,255,255,.06);padding:1px 6px;border-radius:3px">node local-relay.js</code> first.
+            Find your LAN IP: <code style="background:rgba(255,255,255,.06);padding:1px 6px;border-radius:3px">ifconfig</code> (Mac/Linux) or <code style="background:rgba(255,255,255,.06);padding:1px 6px;border-radius:3px">ipconfig</code> (Windows).
+          </div>
+        </div>
+
+        <!-- Custom WSS URL input -->
+        <div id="customRelayConfig" style="margin-bottom:12px">
+          <div style="font-size:10px;color:var(--dim);margin-bottom:6px;letter-spacing:1px">CUSTOM WEBSOCKET URL</div>
+          <div class="input-row">
+            <input type="text" class="small-input" id="customRelayUrl" placeholder="wss://your-relay.example.com?room=CODE">
+            <button class="small-btn outline" onclick="document.querySelector('[data-relay=custom]').click()">Connect</button>
+          </div>
+        </div>
+
+        <!-- Relay status bar -->
+        <div id="relayStatusBar">
+          <div id="relayStatusDot"></div>
+          <span id="relayStatusText">No relay active — using localStorage (same machine only)</span>
+        </div>
+
+        <!-- ─── Other options tabs ─── -->
+        <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px">
+          <div class="sidebar-label" style="margin-bottom:10px">OTHER RELAY OPTIONS</div>
+          <div class="conn-tabs">
+            <button class="conn-tab active" data-conn="cf">Cloudflare</button>
+            <button class="conn-tab" data-conn="supabase">Supabase</button>
+            <button class="conn-tab" data-conn="selfhost">Self-host</button>
+            <button class="conn-tab" data-conn="peerjs">PeerJS P2P</button>
+          </div>
+
+          <!-- Cloudflare -->
+          <div class="conn-panel default" id="connPanel_cf">
+            <div class="other-relay-card">
+              <h5>☁️ Cloudflare Workers + Durable Objects <span class="roadmap-notice">🗺 On roadmap</span></h5>
+              <p>Global edge network with ~0ms latency. Durable Objects give persistent room state. No server to manage once deployed. Free tier covers 100k requests/day.</p>
+              <div class="pros-cons">
+                <div class="pros">✓ Global edge &nbsp; ✓ Free tier &nbsp; ✓ Persistent rooms &nbsp; ✓ Zero cold starts</div>
+                <div class="cons">✗ Durable Objects require paid plan at scale &nbsp; ✗ Slightly more complex deploy</div>
+              </div>
+              <div style="font-size:11px;color:var(--dim);background:rgba(255,255,255,.04);padding:8px 12px;border-radius:6px;font-family:'DM Mono',monospace;">
+                // No API key in source yet — add to dashboard.js:<br>
+                const CF_WORKER_URL = ''; // TODO: wss://x-history.sub.workers.dev
+              </div>
+              <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
+                <a class="source-link" href="https://github.com/YOUR_USERNAME/x-history-app/blob/main/roadmap.md" target="_blank">View in roadmap.md ↗</a>
+                <a class="source-link" href="https://developers.cloudflare.com/workers/tutorials/build-a-websocket-relay/" target="_blank">Cloudflare docs ↗</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Supabase -->
+          <div class="conn-panel" id="connPanel_supabase">
+            <div class="other-relay-card" style="border-left-color:var(--green)">
+              <h5>🟢 Supabase Realtime <span class="roadmap-notice">🗺 On roadmap</span></h5>
+              <p>Free tier with a real Postgres database behind it. Great if you want to persist feed history server-side, add user accounts, or build analytics. Channel-based broadcast maps cleanly to room codes.</p>
+              <div class="pros-cons">
+                <div class="pros">✓ Free tier &nbsp; ✓ Database included &nbsp; ✓ Great SDK &nbsp; ✓ Built-in auth</div>
+                <div class="cons">✗ More setup than PartyKit &nbsp; ✗ Slightly higher latency than edge</div>
+              </div>
+              <div style="font-size:11px;color:var(--dim);background:rgba(255,255,255,.04);padding:8px 12px;border-radius:6px;font-family:'DM Mono',monospace;">
+                // No API key in source yet — add to dashboard.js:<br>
+                const SUPABASE_URL = ''; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// TODO<br>
+                const SUPABASE_ANON_KEY = ''; // TODO
+              </div>
+              <div style="margin-top:10px;display:flex;gap:10px">
+                <a class="source-link" href="https://github.com/YOUR_USERNAME/x-history-app/blob/main/roadmap.md" target="_blank">View in roadmap.md ↗</a>
+                <a class="source-link" href="https://supabase.com/docs/guides/realtime" target="_blank">Supabase Realtime docs ↗</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Self-host -->
+          <div class="conn-panel" id="connPanel_selfhost">
+            <div class="other-relay-card" style="border-left-color:var(--gold)">
+              <h5>🖥 Self-hosted Node.js <span class="roadmap-notice">🗺 On roadmap</span></h5>
+              <p><code style="background:rgba(255,255,255,.06);padding:1px 5px;border-radius:3px">local-relay.js</code> (included in this project) is the relay server. Deploy it to any public VPS — Railway, Fly.io, and Render all have free tiers. Then point the Custom WSS field above at your server.</p>
+              <div class="pros-cons">
+                <div class="pros">✓ Full control &nbsp; ✓ No vendor &nbsp; ✓ Rate limiting built in &nbsp; ✓ 30 lines of code</div>
+                <div class="cons">✗ You maintain it &nbsp; ✗ Need public IP / domain</div>
+              </div>
+              <div style="font-size:11px;color:var(--dim);background:rgba(255,255,255,.04);padding:8px 12px;border-radius:6px;font-family:'DM Mono',monospace;">
+                // Deploy to Railway in 2 clicks, then add to Custom WSS above:<br>
+                wss://your-app.railway.app?room=ROOMCODE&amp;handle=YOURHANDLE
+              </div>
+              <div style="margin-top:10px;display:flex;gap:10px">
+                <a class="source-link" href="https://github.com/YOUR_USERNAME/x-history-app/blob/main/local-relay.js" target="_blank">local-relay.js source ↗</a>
+                <a class="source-link" href="https://railway.app" target="_blank">Deploy on Railway ↗</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- PeerJS -->
+          <div class="conn-panel" id="connPanel_peerjs">
+            <div class="other-relay-card" style="border-left-color:var(--blue)">
+              <h5>🔗 PeerJS (WebRTC P2P) <span class="roadmap-notice">🗺 On roadmap</span></h5>
+              <p>Truly peer-to-peer once connected — no relay server carries your data. Low latency. Uses PeerJS cloud for the initial handshake only. Best for privacy since data flows directly browser-to-browser.</p>
+              <div class="pros-cons">
+                <div class="pros">✓ No relay for data &nbsp; ✓ Very low latency &nbsp; ✓ Free signaling tier &nbsp; ✓ Private</div>
+                <div class="cons">✗ NAT traversal fails ~10% of connections &nbsp; ✗ More complex setup &nbsp; ✗ Needs signaling key</div>
+              </div>
+              <div style="font-size:11px;color:var(--dim);background:rgba(255,255,255,.04);padding:8px 12px;border-radius:6px;font-family:'DM Mono',monospace;">
+                // No API key in source yet — add to dashboard.js:<br>
+                const PEERJS_KEY = ''; // TODO: free key from peerjs.com
+              </div>
+              <div style="margin-top:10px;display:flex;gap:10px">
+                <a class="source-link" href="https://github.com/YOUR_USERNAME/x-history-app/blob/main/roadmap.md" target="_blank">View in roadmap.md ↗</a>
+                <a class="source-link" href="https://peerjs.com" target="_blank">PeerJS docs ↗</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fork CTA -->
+          <div style="margin-top:14px;padding:12px 16px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:12px">
+            <span style="font-size:20px">🍴</span>
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:3px">Add your own relay or feature</div>
+              <div style="font-size:11px;color:var(--dim)">Fork the source, add an API key, open a PR. All relay logic lives in <code style="background:rgba(255,255,255,.06);padding:1px 5px;border-radius:3px">dashboard.js</code></div>
+            </div>
+            <a href="https://github.com/YOUR_USERNAME/x-history-app" target="_blank" style="margin-left:auto;text-decoration:none">
+              <button class="small-btn">View Source ↗</button>
+            </a>
+          </div>
+        </div>
+      </div><!-- /conn-settings-body -->
+    </div><!-- /conn-settings -->
+
+    <!-- Setup / session -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0">
+
+      <div id="mpSetup" class="mp-setup">
+        <h3>Connect with a friend</h3>
+        <div class="mp-input-group">
+          <label>YOUR HANDLE</label>
+          <input type="text" class="mp-input" id="mpMyHandle" placeholder="@yourhandle">
+        </div>
+        <div style="margin-bottom:20px">
+          <button class="mp-btn" id="mpCreateRoom">Create Room</button>
+          <button class="mp-btn secondary" id="mpJoinBtn">Join a Room</button>
+        </div>
+
+        <div id="mpInviteBox" style="display:none">
+          <div class="invite-code-box">
+            <div class="sidebar-label" style="margin-bottom:8px">ROOM CODE — click to copy</div>
+            <div class="code" id="mpRoomCode">• • • •</div>
+            <div id="mpInviteUrl" class="invite-url"></div>
+          </div>
+          <div class="invite-actions">
+            <button class="small-btn" id="copyInviteLink">📋 Copy invite link</button>
+            <span style="font-size:11px;color:var(--dim);margin-top:8px">Share the code OR the link — either works</span>
+          </div>
+          <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+            <div class="mp-status-dot waiting"></div>
+            <span style="font-size:12px;color:var(--dim)">Waiting for friend to join…</span>
+          </div>
+        </div>
+
+        <div id="mpJoinBox" style="display:none;margin-top:16px">
+          <div class="mp-input-group">
+            <label>ROOM CODE</label>
+            <input type="text" class="mp-input" id="mpJoinCode" placeholder="Enter 6-character code" maxlength="6" style="text-transform:uppercase;letter-spacing:6px;font-size:18px">
+          </div>
+          <button class="mp-btn" id="mpConfirmJoin">Join Room</button>
+        </div>
+      </div>
+
+      <div id="mpSession" style="display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0">
+        <div class="mp-status-bar">
+          <div class="mp-status-dot connected" id="mpDot"></div>
+          <span id="mpStatusText">Connected</span>
+          <span style="margin-left:auto;cursor:pointer;color:var(--red);font-size:11px" id="mpDisconnectBtn">Disconnect</span>
+        </div>
+        <div class="mp-feeds" style="flex:1;min-height:0">
+          <div class="mp-col">
+            <div class="mp-col-header">
+              <div>
+                <div class="mp-col-title" id="mpMyColTitle">You</div>
+                <div class="mp-col-handle" id="mpMyColHandle">browsing now</div>
+              </div>
+              <div style="margin-left:auto"><div class="live-dot"></div></div>
+            </div>
+            <div class="mp-col-feed" id="mpMyFeed"></div>
+          </div>
+          <div class="mp-col friend-col">
+            <div class="mp-col-header">
+              <div>
+                <div class="mp-col-title" id="mpFriendColTitle">Friend</div>
+                <div class="mp-col-handle" id="mpFriendColHandle">waiting…</div>
+              </div>
+              <div style="margin-left:auto"><div class="mp-status-dot waiting" id="friendDot"></div></div>
+            </div>
+            <div class="mp-col-feed" id="mpFriendFeed">
+              <div class="empty-state">
+                <div class="empty-x">⚡</div>
+                <div class="empty-title" style="color:var(--mp-accent)">Waiting for friend</div>
+                <div class="empty-desc">Turn on a relay above and share your room code. Their feed appears here as they browse.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /multiplayerPage -->
+
+  <!-- RAINDROP PAGE -->
+  <div class="page" id="raindropPage" style="flex-direction:column">
+    <div style="flex:1;overflow-y:auto">
+      <div class="rd-banner">
+        <h2>💧 Raindrop.io Integration <span class="api-badge">DEMO — API PLACEHOLDERS</span></h2>
+        <p>Connect your Raindrop.io account to auto-save seen/liked posts. Enter your API key below to activate.</p>
+      </div>
+      <div style="padding:20px 24px 0">
+        <div class="demo-banner">
+          🔑 Features below are fully specced and coded — add your <strong>Raindrop.io API token</strong> to activate real sync.
+          No token is stored in source code. &nbsp;
+          <a href="https://app.raindrop.io/settings/integrations" target="_blank" style="color:var(--blue)">Get token ↗</a>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:20px">
+          <h4 style="font-family:'Syne',sans-serif;margin-bottom:12px">API Configuration</h4>
+          <label style="font-size:11px;color:var(--dim);letter-spacing:1px">RAINDROP API TOKEN</label>
+          <input type="password" class="rd-api-input" id="rdApiKey" placeholder="Paste your Raindrop.io API token…">
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="rd-btn" id="rdConnectBtn">Connect</button>
+            <a href="https://app.raindrop.io/settings/integrations" target="_blank" style="text-decoration:none"><button class="rd-btn">Get Token ↗</button></a>
+          </div>
+          <div id="rdStatus" style="margin-top:10px;font-size:11px;color:var(--dim)">Not connected</div>
+        </div>
+      </div>
+      <div class="rd-grid" id="rdGrid"></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  // Connection settings expand/collapse
+  document.getElementById('connSettingsToggle').addEventListener('click', () => {
+    const body = document.getElementById('connSettingsBody');
+    const arrow = document.getElementById('connSettingsArrow');
+    const open = body.classList.toggle('open');
+    arrow.textContent = open ? '▴ collapse' : '▾ expand';
+  });
+</script>
+<script src="dashboard.js"></script>
+</body>
+</html>

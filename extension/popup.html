@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>𝕏 History</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 320px; min-height: 200px;
+      background: #000; color: #fff;
+      font-family: 'Helvetica Neue', sans-serif;
+      padding: 16px;
+    }
+    h1 { font-size: 18px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .x-logo { font-size: 22px; }
+    .stats { display: flex; gap: 12px; margin-bottom: 12px; }
+    .stat { background: #111; border-radius: 8px; padding: 8px 14px; text-align: center; flex: 1; }
+    .stat .num { font-size: 20px; font-weight: bold; }
+    .stat .label { font-size: 10px; color: #666; }
+    button {
+      width: 100%; padding: 10px; border-radius: 8px;
+      border: 1px solid #333; background: #111;
+      color: #fff; cursor: pointer; margin-top: 6px;
+      font-size: 13px; transition: background 0.2s;
+    }
+    button:hover { background: #222; }
+    button.primary { background: #fff; color: #000; border-color: #fff; }
+    button.primary:hover { background: #e0e0e0; }
+    button.danger { border-color: #ff4444; color: #ff4444; }
+    .sep { border: none; border-top: 1px solid #222; margin: 12px 0; }
+  </style>
+</head>
+<body>
+  <h1><span class="x-logo">𝕏</span> History Tracker</h1>
+  <div class="stats" id="stats">
+    <div class="stat"><div class="num" id="seenCount">—</div><div class="label">SEEN</div></div>
+    <div class="stat"><div class="num" id="likedCount">—</div><div class="label">LIKED</div></div>
+    <div class="stat"><div class="num" id="bookmarkCount">—</div><div class="label">BOOKMARKED</div></div>
+  </div>
+  <hr class="sep">
+  <button class="primary" id="openDashboard">Open Dashboard ↗</button>
+  <button id="exportBtn">Export History JSON</button>
+  <button class="danger" id="clearBtn">Clear History</button>
+  <script src="popup.js"></script>
+</body>
+</html>

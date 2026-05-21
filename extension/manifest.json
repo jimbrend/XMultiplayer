@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "𝕏 History & Multiplayer",
+  "version": "1.0",
+  "description": "Track seen/liked/bookmarked posts, replace X with 𝕏 logo, multiplayer feed sharing",
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": ["https://x.com/*", "https://twitter.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_end",
+      "all_frames": true
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "𝕏 History"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["logo.svg"],
+      "matches": ["https://x.com/*", "https://twitter.com/*"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
