@@ -582,7 +582,6 @@ function updateLiveIndicator() {
   if (!dot || !label) return;
 
   const mpLive = hasFriendInLobby();
-  const extensionContext = typeof chrome !== 'undefined' && chrome.storage;
 
   if (mpLive) {
     dot.style.background = 'var(--green)';
@@ -594,7 +593,7 @@ function updateLiveIndicator() {
   } else {
     dot.style.background = 'var(--red)';
     dot.classList.remove('pulse');
-    label.textContent = extensionContext || allTweets.length > 0 ? 'solo' : 'offline';
+    label.textContent = 'single player mode';
     wrap?.classList.add('live-solo');
     wrap?.classList.remove('live-multiplayer');
     if (wrap) wrap.title = LIVE_TOOLTIP_SOLO;

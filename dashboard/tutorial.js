@@ -75,7 +75,7 @@
   }
 
   function shouldAutoStart() {
-    return !isTutorialOff() && !localStorage.getItem(LS_TUTORIAL_DONE);
+    return !isTutorialOff();
   }
 
   function unlockBrand() {
@@ -289,6 +289,15 @@
 
   function skip() {
     hideOverlay(true);
+  }
+
+  function toggleTutorial() {
+    if (active) {
+      localStorage.setItem(LS_TUTORIAL_OFF, '1');
+      hideOverlay(false);
+    } else {
+      setTutorialEnabled(true);
+    }
   }
 
   function setTutorialEnabled(on) {
