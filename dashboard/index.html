@@ -3,18 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>𝕏 History Dashboard</title>
+  <title>𝕏 Multiplayer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Chirp,Segoe UI,system-ui,sans-serif&display=swap" rel="stylesheet">
   <style>
     :root {
       --black: #000; --white: #fff; --dim: #8a8a8a; --dimmer: #3a3a3a;
       --card: #0d0d0d; --border: #1f1f1f; --accent: #fff;
       --blue: #1d9bf0; --green: #00ba7c; --red: #f4212e;
       --gold: #ffd700; --mp-accent: #7c3aed; --mp-bg: rgba(124,58,237,0.06);
+      --bento-text: rgba(231, 233, 234, 0.72);
+    }
+    body.x-theme {
+      --mp-accent: #1d9bf0;
+      --mp-bg: rgba(29, 155, 240, 0.06);
+      --card: #16181c;
+      --border: #2f3336;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:var(--black); color:var(--white); font-family:'DM Mono',monospace; min-height:100vh; overflow-x:hidden; }
+    body { background:var(--black); color:var(--white); font-family: Inter, system-ui, sans-serif; min-height:100vh; overflow-x:hidden; transition: background .4s; }
+    body.x-theme .header { border-bottom-color: #2f3336; }
+    body.x-theme .header-tab.mp-tab { color: var(--blue); border-color: rgba(29,155,240,.35); }
+    body.x-theme .header-tab.mp-tab.active { background: var(--blue); border-color: var(--blue); }
+    body.x-theme .mp-header { background: linear-gradient(180deg, rgba(29,155,240,.1) 0%, transparent 100%); }
+    body.x-theme .relay-option-btn.relay-active { border-color: var(--blue); background: rgba(29,155,240,.12); }
+    body.x-theme .relay-option-btn:hover { border-color: var(--blue); }
+    body.x-theme .small-btn { background: var(--blue); }
+    body.x-theme .small-btn.outline { color: var(--blue); border-color: var(--blue); }
+    body.x-theme .mp-btn { background: var(--blue); }
+    body.x-theme .mp-btn.secondary { color: var(--blue); border-color: var(--blue); }
+    body.x-theme .invite-code-box { border-color: var(--blue); }
+    body.x-theme .invite-code-box .code { color: var(--blue); background: rgba(29,155,240,.1); }
+    body.x-theme .mp-col.friend-col .tweet-card { border-color: rgba(29,155,240,.2); }
+    body.x-theme .toast.mp { border-color: var(--blue); }
+
+    /* Bento / card explanations — larger, soft blue → white on hover */
+    .bento-desc {
+      font-size: 14px !important;
+      line-height: 1.65 !important;
+      color: var(--bento-text) !important;
+      transition: color .25s ease;
+    }
+    .bento-desc.bento-lit,
+    .rd-card:hover .bento-desc,
+    .keet-card:hover .bento-desc,
+    .other-relay-card:hover .bento-desc {
+      color: #fff !important;
+    }
 
     /* HEADER */
     .header {
@@ -24,8 +60,10 @@
       display:flex; align-items:center; justify-content:space-between;
       padding:0 24px; height:56px;
     }
-    .header-logo { font-family:'Syne',sans-serif; font-weight:800; font-size:20px; display:flex; align-items:center; gap:10px; }
-    .header-logo .x-glyph { font-size:22px; background:var(--white); color:var(--black); width:34px; height:34px; display:flex; align-items:center; justify-content:center; border-radius:8px; }
+    .header-logo { font-family: Inter, system-ui, sans-serif; font-weight:800; font-size:20px; display:flex; align-items:center; gap:10px; }
+    .header-logo .x-glyph { font-size:20px; background:var(--white); color:var(--black); width:34px; height:34px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:900; }
+    body.x-theme .header-logo .x-glyph { background: var(--white); }
+    #brandSubtitle { font-size: 11px; color: var(--dim); font-weight: 500; display: block; margin-top: 1px; }
     .header-tabs { display:flex; gap:2px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:3px; }
     .header-tab { padding:5px 16px; border-radius:7px; cursor:pointer; font-family:'Syne',sans-serif; font-size:12px; font-weight:600; letter-spacing:.5px; transition:all .15s; border:none; background:transparent; color:var(--dim); }
     .header-tab.active { background:var(--white); color:var(--black); }
@@ -35,6 +73,20 @@
     .live-dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
     @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
     .live-label { font-size:11px; color:var(--dim); }
+    .tutorial-toggle {
+      display:flex; align-items:center; gap:6px;
+      padding:5px 12px; border-radius:20px;
+      border:1px solid var(--border); background:var(--card);
+      color:var(--dim); font-size:11px; font-weight:600;
+      cursor:pointer; transition: all .25s;
+    }
+    .tutorial-toggle:hover { border-color: var(--blue); color: var(--white); }
+    .tutorial-toggle.tutorial-on {
+      border-color: var(--blue);
+      color: var(--white);
+      box-shadow: 0 0 16px rgba(29, 155, 240, 0.45), 0 0 32px rgba(29, 155, 240, 0.15);
+      background: rgba(29, 155, 240, 0.12);
+    }
 
     /* LAYOUT */
     .main { display:flex; height:calc(100vh - 56px); }
@@ -135,7 +187,8 @@
     .relay-indicator { width:10px; height:10px; border-radius:50%; background:var(--dimmer); flex-shrink:0; transition:background .3s; }
     .relay-main { flex:1; }
     .relay-name { font-size:13px; font-weight:500; color:var(--white); }
-    .relay-desc { font-size:10px; color:var(--dim); margin-top:2px; }
+    .relay-desc { font-size:12px; color:var(--bento-text); margin-top:3px; line-height:1.45; transition: color .25s; }
+    .relay-option-btn:hover .relay-desc { color:#fff; }
     .relay-status-text { font-size:10px; font-weight:700; color:var(--dim); letter-spacing:.5px; }
     .relay-option-btn.relay-active .relay-status-text { color:var(--green); }
 
@@ -162,6 +215,7 @@
     }
     .other-relay-card h5 { font-family:'Syne',sans-serif; font-size:13px; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
     .other-relay-card p { font-size:11px; color:var(--dim); line-height:1.7; margin-bottom:8px; }
+    .other-relay-card p.bento-desc { font-size:14px; }
     .other-relay-card .pros-cons { display:flex; gap:12px; margin-bottom:10px; font-size:10px; }
     .pros-cons .pros { color:var(--green); }
     .pros-cons .cons { color:#ff8844; }
@@ -186,6 +240,7 @@
     .keet-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; border-left:3px solid var(--blue); opacity:.75; }
     .keet-card h4 { font-family:'Syne',sans-serif; font-size:13px; margin-bottom:8px; }
     .keet-card p { font-size:11px; color:var(--dim); line-height:1.6; margin-bottom:12px; }
+    .keet-card p.bento-desc, .rd-card p.bento-desc { font-size: 14px; }
     .keet-btn { padding:6px 14px; border-radius:6px; font-size:11px; font-family:'Syne',sans-serif; font-weight:700; cursor:pointer; border:1px solid var(--border); background:transparent; color:var(--dim); }
     .keet-btn:hover { border-color:var(--blue); color:var(--blue); }
     .source-link { font-size:10px; color:var(--blue); text-decoration:none; }
@@ -230,6 +285,132 @@
     .mp-col.friend-col .tweet-card { border-color:rgba(124,58,237,.25); }
     .mp-col.friend-col .tweet-card:hover { border-color:rgba(124,58,237,.5); }
 
+    /* MP sync + flagged discussion */
+    .mp-controls-bar {
+      padding: 10px 18px; border-bottom: 1px solid var(--border);
+      display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+      background: rgba(255,255,255,.02);
+    }
+    .mp-sync-toggle {
+      display: flex; align-items: center; gap: 8px; cursor: pointer;
+      font-size: 12px; color: var(--dim); user-select: none;
+    }
+    .mp-sync-toggle input { accent-color: var(--blue); width: 16px; height: 16px; }
+    .mp-sync-toggle.on { color: var(--white); }
+    .mp-flagged-section {
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(29,155,240,.06) 0%, transparent 100%);
+      max-height: 140px; overflow-y: auto;
+    }
+    .mp-flagged-header {
+      padding: 8px 18px; font-size: 10px; letter-spacing: 1.2px;
+      color: var(--dim); font-weight: 700; text-transform: uppercase;
+    }
+    .mp-flagged-list { padding: 0 12px 10px; }
+    .mp-flagged-empty { padding: 8px 18px 12px; font-size: 12px; color: var(--dim); }
+    .mp-flagged-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; margin-bottom: 4px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 8px; font-size: 13px;
+      animation: slideIn .2s ease;
+    }
+    .mp-flagged-row .flag-handle { color: var(--blue); font-weight: 600; flex-shrink: 0; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mp-flagged-row .flag-text { color: #e7e9ea; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mp-flagged-arrow {
+      flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px;
+      border: 1px solid var(--border); background: transparent; color: var(--dim);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all .15s;
+    }
+    .mp-flagged-arrow:hover { border-color: var(--blue); color: var(--blue); background: rgba(29,155,240,.1); }
+    .tweet-card .mp-card-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .flag-btn, .mp-mini-btn {
+      padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 600;
+      border: 1px solid var(--border); background: transparent; color: var(--dim);
+      cursor: pointer; transition: all .15s;
+    }
+    .flag-btn:hover { border-color: #ffc800; color: #ffc800; background: rgba(255,200,0,.08); }
+    .flag-btn.flagged { border-color: #ffc800; color: #ffc800; background: rgba(255,200,0,.12); }
+
+    /* Breakout platform menu */
+    .breakout-overlay {
+      position: fixed; inset: 0; z-index: 10001;
+      background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center;
+    }
+    .breakout-overlay.open { display: flex; }
+    .breakout-panel {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px; max-width: 400px; width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    }
+    .breakout-panel h4 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .breakout-panel p { font-size: 13px; color: var(--dim); line-height: 1.6; margin-bottom: 14px; }
+    .breakout-platforms { display: flex; flex-direction: column; gap: 6px; }
+    .breakout-platforms a, .breakout-platforms button {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);
+      background: transparent; color: var(--white); text-decoration: none;
+      font-size: 13px; cursor: pointer; transition: all .15s; text-align: left;
+    }
+    .breakout-platforms a:hover, .breakout-platforms button:hover {
+      border-color: var(--blue); background: rgba(29,155,240,.08);
+    }
+    .breakout-platforms .default-platform { border-color: var(--blue); background: rgba(29,155,240,.1); }
+    .breakout-close { margin-top: 12px; width: 100%; padding: 8px; border: none; border-radius: 8px; background: var(--border); color: var(--white); cursor: pointer; font-size: 12px; }
+
+    /* Tutorial overlay */
+    body.tutorial-active { overflow: hidden; }
+    .tutorial-overlay {
+      position: fixed; inset: 0; z-index: 10000;
+      pointer-events: none; display: none;
+    }
+    .tutorial-overlay.active { display: block; pointer-events: auto; }
+    .tutorial-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(0, 0, 0, 0.78);
+      pointer-events: auto;
+    }
+    .tutorial-spotlight {
+      position: fixed; z-index: 10001;
+      border-radius: 12px;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.78),
+                  0 0 0 2px rgba(29, 155, 240, 0.9),
+                  0 0 24px rgba(29, 155, 240, 0.35);
+      pointer-events: none;
+      transition: top .2s, left .2s, width .2s, height .2s;
+    }
+    .tutorial-card {
+      position: fixed; z-index: 10002;
+      width: min(320px, calc(100vw - 32px));
+      background: #16181c; border: 1px solid #2f3336;
+      border-radius: 16px; padding: 18px 20px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.5);
+      pointer-events: auto;
+    }
+    .tutorial-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; color: #fff; }
+    .tutorial-card p { font-size: 14px; line-height: 1.65; color: #e7e9ea; margin-bottom: 14px; }
+    .tutorial-card .tutorial-counter { font-size: 11px; color: var(--dim); margin-bottom: 8px; }
+    .tutorial-card .tutorial-links { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; font-size: 12px; }
+    .tutorial-card .tutorial-links a { color: var(--blue); text-decoration: none; }
+    .tutorial-card .tutorial-links a:hover { text-decoration: underline; }
+    .tutorial-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .tutorial-actions button {
+      padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 700;
+      cursor: pointer; border: none; transition: opacity .15s;
+    }
+    .tutorial-actions .tutorial-next { background: var(--blue); color: #fff; }
+    .tutorial-actions .tutorial-prev, .tutorial-actions .tutorial-skip {
+      background: transparent; border: 1px solid #536471; color: #e7e9ea;
+    }
+    .tutorial-pointer {
+      position: fixed; z-index: 10003; width: 0; height: 0;
+      border-left: 10px solid transparent; border-right: 10px solid transparent;
+      border-bottom: 14px solid var(--blue);
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,.3));
+      display: none;
+    }
+
     /* RAINDROP */
     .rd-banner { background:linear-gradient(135deg,#1a2a3a 0%,#0d1a2a 100%); border-bottom:1px solid #1e3a5f; padding:28px 32px; }
     .rd-banner h2 { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; display:flex; align-items:center; gap:12px; margin-bottom:6px; flex-wrap:wrap; }
@@ -263,7 +444,10 @@
 <header class="header">
   <div class="header-logo">
     <div class="x-glyph">𝕏</div>
-    <span>History</span>
+    <div>
+      <span id="brandTitle">History</span>
+      <span id="brandSubtitle" style="display:none">Track · Share · Discuss</span>
+    </div>
   </div>
   <div class="header-tabs">
     <button class="header-tab active" data-page="myFeed">My Feed</button>
@@ -272,6 +456,10 @@
     <button class="header-tab" data-page="keet">🔗 Keet</button>
   </div>
   <div class="header-right">
+    <button type="button" class="tutorial-toggle" id="tutorialToggle" aria-pressed="false" title="Click: replay walkthrough · Shift+click: disable auto-tutorial">
+      <span>✦</span>
+      <span class="tutorial-toggle-label">Tutorial</span>
+    </button>
     <div class="live-dot" id="liveDot"></div>
     <span class="live-label" id="liveLabel">connecting…</span>
   </div>
@@ -338,7 +526,7 @@
     <!-- ═══════════════════════════════════════
          CONNECTION SETTINGS — always visible
     ═══════════════════════════════════════ -->
-    <div class="conn-settings">
+    <div class="conn-settings" id="connSettingsPanel">
       <div class="conn-settings-header" id="connSettingsToggle">
         <span style="font-size:16px">⚙</span>
         <span>Connection Settings</span>
@@ -424,7 +612,7 @@
           <div class="conn-panel default" id="connPanel_cf">
             <div class="other-relay-card">
               <h5>☁️ Cloudflare Workers + Durable Objects <span class="roadmap-notice">🗺 On roadmap</span></h5>
-              <p>Global edge network with ~0ms latency. Durable Objects give persistent room state. No server to manage once deployed. Free tier covers 100k requests/day.</p>
+              <p class="bento-desc">Global edge network with ~0ms latency. Durable Objects give persistent room state. No server to manage once deployed. Free tier covers 100k requests/day.</p>
               <div class="pros-cons">
                 <div class="pros">✓ Global edge &nbsp; ✓ Free tier &nbsp; ✓ Persistent rooms &nbsp; ✓ Zero cold starts</div>
                 <div class="cons">✗ Durable Objects require paid plan at scale &nbsp; ✗ Slightly more complex deploy</div>
@@ -434,7 +622,7 @@
                 const CF_WORKER_URL = ''; // TODO: wss://x-history.sub.workers.dev
               </div>
               <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
-                <a class="source-link" href="https://github.com/YOUR_USERNAME/x-history-app/blob/main/roadmap.md" target="_blank">View in roadmap.md ↗</a>
+                <a class="source-link" href="https://github.com/jimbrend/XMultiplayer/blob/main/roadmap.md" target="_blank">View in roadmap.md ↗</a>
                 <a class="source-link" href="https://developers.cloudflare.com/workers/tutorials/build-a-websocket-relay/" target="_blank">Cloudflare docs ↗</a>
               </div>
             </div>
@@ -444,7 +632,7 @@
           <div class="conn-panel" id="connPanel_supabase">
             <div class="other-relay-card" style="border-left-color:var(--green)">
               <h5>🟢 Supabase Realtime <span class="roadmap-notice">🗺 On roadmap</span></h5>
-              <p>Free tier with a real Postgres database behind it. Great if you want to persist feed history server-side, add user accounts, or build analytics. Channel-based broadcast maps cleanly to room codes.</p>
+              <p class="bento-desc">Free tier with a real Postgres database behind it. Great if you want to persist feed history server-side, add user accounts, or build analytics. Channel-based broadcast maps cleanly to room codes.</p>
               <div class="pros-cons">
                 <div class="pros">✓ Free tier &nbsp; ✓ Database included &nbsp; ✓ Great SDK &nbsp; ✓ Built-in auth</div>
                 <div class="cons">✗ More setup than PartyKit &nbsp; ✗ Slightly higher latency than edge</div>
@@ -455,7 +643,7 @@
                 const SUPABASE_ANON_KEY = ''; // TODO
               </div>
               <div style="margin-top:10px;display:flex;gap:10px">
-                <a class="source-link" href="https://github.com/YOUR_USERNAME/x-history-app/blob/main/roadmap.md" target="_blank">View in roadmap.md ↗</a>
+                <a class="source-link" href="https://github.com/jimbrend/XMultiplayer/blob/main/roadmap.md" target="_blank">View in roadmap.md ↗</a>
                 <a class="source-link" href="https://supabase.com/docs/guides/realtime" target="_blank">Supabase Realtime docs ↗</a>
               </div>
             </div>
@@ -465,7 +653,7 @@
           <div class="conn-panel" id="connPanel_selfhost">
             <div class="other-relay-card" style="border-left-color:var(--gold)">
               <h5>🖥 Self-hosted Node.js <span class="roadmap-notice">🗺 On roadmap</span></h5>
-              <p><code style="background:rgba(255,255,255,.06);padding:1px 5px;border-radius:3px">local-relay.js</code> (included in this project) is the relay server. Deploy it to any public VPS — Railway, Fly.io, and Render all have free tiers. Then point the Custom WSS field above at your server.</p>
+              <p class="bento-desc"><code style="background:rgba(255,255,255,.06);padding:1px 5px;border-radius:3px">local-relay.js</code> (included in this project) is the relay server. Deploy it to any public VPS — Railway, Fly.io, and Render all have free tiers. Then point the Custom WSS field above at your server.</p>
               <div class="pros-cons">
                 <div class="pros">✓ Full control &nbsp; ✓ No vendor &nbsp; ✓ Rate limiting built in &nbsp; ✓ 30 lines of code</div>
                 <div class="cons">✗ You maintain it &nbsp; ✗ Need public IP / domain</div>
@@ -475,7 +663,7 @@
                 wss://your-app.railway.app?room=ROOMCODE&amp;handle=YOURHANDLE
               </div>
               <div style="margin-top:10px;display:flex;gap:10px">
-                <a class="source-link" href="https://github.com/YOUR_USERNAME/x-history-app/blob/main/local-relay.js" target="_blank">local-relay.js source ↗</a>
+                <a class="source-link" href="https://github.com/jimbrend/XMultiplayer/blob/main/local-relay.js" target="_blank">local-relay.js source ↗</a>
                 <a class="source-link" href="https://railway.app" target="_blank">Deploy on Railway ↗</a>
               </div>
             </div>
@@ -485,7 +673,7 @@
           <div class="conn-panel" id="connPanel_peerjs">
             <div class="other-relay-card" style="border-left-color:var(--blue)">
               <h5>🔗 PeerJS (WebRTC P2P) <span class="roadmap-notice">🗺 On roadmap</span></h5>
-              <p>Truly peer-to-peer once connected — no relay server carries your data. Low latency. Uses PeerJS cloud for the initial handshake only. Best for privacy since data flows directly browser-to-browser.</p>
+              <p class="bento-desc">Truly peer-to-peer once connected — no relay server carries your data. Low latency. Uses PeerJS cloud for the initial handshake only. Best for privacy since data flows directly browser-to-browser.</p>
               <div class="pros-cons">
                 <div class="pros">✓ No relay for data &nbsp; ✓ Very low latency &nbsp; ✓ Free signaling tier &nbsp; ✓ Private</div>
                 <div class="cons">✗ NAT traversal fails ~10% of connections &nbsp; ✗ More complex setup &nbsp; ✗ Needs signaling key</div>
@@ -495,20 +683,20 @@
                 const PEERJS_KEY = ''; // TODO: free key from peerjs.com
               </div>
               <div style="margin-top:10px;display:flex;gap:10px">
-                <a class="source-link" href="https://github.com/YOUR_USERNAME/x-history-app/blob/main/roadmap.md" target="_blank">View in roadmap.md ↗</a>
+                <a class="source-link" href="https://github.com/jimbrend/XMultiplayer/blob/main/roadmap.md" target="_blank">View in roadmap.md ↗</a>
                 <a class="source-link" href="https://peerjs.com" target="_blank">PeerJS docs ↗</a>
               </div>
             </div>
           </div>
 
           <!-- Fork CTA -->
-          <div style="margin-top:14px;padding:12px 16px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:12px">
+          <div id="sourceCodeCta" style="margin-top:14px;padding:12px 16px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:12px">
             <span style="font-size:20px">🍴</span>
             <div>
-              <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:3px">Add your own relay or feature</div>
-              <div style="font-size:11px;color:var(--dim)">Fork the source, add an API key, open a PR. All relay logic lives in <code style="background:rgba(255,255,255,.06);padding:1px 5px;border-radius:3px">dashboard.js</code></div>
+              <div style="font-family:Inter,sans-serif;font-size:14px;font-weight:700;margin-bottom:4px;color:#fff">Source code — fork, clone, PR</div>
+              <p class="bento-desc" style="margin:0">Edit locally, re-clone for updates, run <code style="background:rgba(255,255,255,.06);padding:1px 5px;border-radius:3px">node server.js</code>. API keys stay in your browser — not in the repo. Optional: <a href="https://infisical.com" target="_blank" rel="noopener" style="color:var(--blue)">Infisical</a> for secrets.</p>
             </div>
-            <a href="https://github.com/YOUR_USERNAME/x-history-app" target="_blank" style="margin-left:auto;text-decoration:none">
+            <a href="https://github.com/jimbrend/XMultiplayer" target="_blank" rel="noopener" style="margin-left:auto;text-decoration:none;flex-shrink:0">
               <button class="small-btn">View Source ↗</button>
             </a>
           </div>
@@ -560,6 +748,18 @@
           <div class="mp-status-dot connected" id="mpDot"></div>
           <span id="mpStatusText">Connected</span>
           <span style="margin-left:auto;cursor:pointer;color:var(--red);font-size:11px" id="mpDisconnectBtn">Disconnect</span>
+        </div>
+        <div class="mp-flagged-section" id="mpFlaggedSection">
+          <div class="mp-flagged-header">🚩 Flagged for discussion — recommend talking about these</div>
+          <div class="mp-flagged-list" id="mpFlaggedList"></div>
+          <div class="mp-flagged-empty" id="mpFlaggedEmpty">Flag a post below to surface it here for you and your friend.</div>
+        </div>
+        <div class="mp-controls-bar">
+          <label class="mp-sync-toggle on" id="mpSyncToggleLabel">
+            <input type="checkbox" id="mpSyncSeenToggle" checked>
+            <span>Sync each seen post to multiplayer feed</span>
+          </label>
+          <span style="font-size:11px;color:var(--dim)">Use 🚩 Flag on any post to add it to the discussion strip above</span>
         </div>
         <div class="mp-feeds" style="flex:1;min-height:0">
           <div class="mp-col">
@@ -632,27 +832,27 @@
       <div class="keet-grid">
         <div class="keet-card">
           <h4>Connect 𝕏 via Keet Link</h4>
-          <p>End users authenticate with Keet’s link component — Keet maintains the session.</p>
+          <p class="bento-desc">End users authenticate with Keet’s link component — Keet maintains the session.</p>
           <button class="keet-btn" data-keet-action="link-x">Preview flow</button>
         </div>
         <div class="keet-card">
           <h4>Sync server-side history</h4>
-          <p>Pull timeline, likes, and bookmarks into this dashboard without extension-only scraping.</p>
+          <p class="bento-desc">Pull timeline, likes, and bookmarks into this dashboard without extension-only scraping.</p>
           <button class="keet-btn" data-keet-action="sync-history">Preview sync</button>
         </div>
         <div class="keet-card">
           <h4>Sync likes</h4>
-          <p>Merge Keet-fetched liked posts with your Seen + Liked filter.</p>
+          <p class="bento-desc">Merge Keet-fetched liked posts with your Seen + Liked filter.</p>
           <button class="keet-btn" data-keet-action="sync-likes">Preview sync</button>
         </div>
         <div class="keet-card">
           <h4>Post digest</h4>
-          <p>Example: <code style="font-size:10px">integrations.x.post("…")</code> for weekly summaries.</p>
+          <p class="bento-desc">Example: <code style="font-size:10px">integrations.x.post("…")</code> for weekly summaries.</p>
           <button class="keet-btn" data-keet-action="post-digest">Preview post</button>
         </div>
         <div class="keet-card" style="border-left-color:var(--mp-accent)">
           <h4>Multiplayer highlight</h4>
-          <p>Share a room highlight to 𝕏 on the user’s behalf after a multiplayer session.</p>
+          <p class="bento-desc">Share a room highlight to 𝕏 on the user’s behalf after a multiplayer session.</p>
           <button class="keet-btn" data-keet-action="mp-highlight">Preview post</button>
         </div>
       </div>
@@ -664,7 +864,7 @@
     <div style="flex:1;overflow-y:auto">
       <div class="rd-banner">
         <h2>💧 Raindrop.io Integration <span class="api-badge">DEMO — API PLACEHOLDERS</span></h2>
-        <p>Connect your Raindrop.io account to auto-save seen/liked posts. Enter your API key below to activate.</p>
+        <p class="bento-desc">Connect your Raindrop.io account to auto-save seen/liked posts. Enter your API key below to activate.</p>
       </div>
       <div style="padding:20px 24px 0">
         <div class="demo-banner">
@@ -691,6 +891,35 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
+<!-- Breakout discussion platforms -->
+<div class="breakout-overlay" id="breakoutOverlay">
+  <div class="breakout-panel">
+    <h4>Discuss this post</h4>
+    <p id="breakoutPreview">Link copied. Open a breakout room in-app or continue the conversation on:</p>
+    <div class="breakout-platforms" id="breakoutPlatforms"></div>
+    <button type="button" class="breakout-close" id="breakoutClose">Close</button>
+  </div>
+</div>
+
+<!-- Tutorial spotlight -->
+<div class="tutorial-overlay" id="tutorialOverlay">
+  <div class="tutorial-backdrop" id="tutorialBackdrop"></div>
+  <div class="tutorial-spotlight" id="tutorialSpotlight" style="display:none"></div>
+  <div class="tutorial-pointer" id="tutorialPointer"></div>
+  <div class="tutorial-card" id="tutorialCard">
+    <div class="tutorial-counter" id="tutorialCounter">1 / 7</div>
+    <h3 id="tutorialTitle">Welcome</h3>
+    <p id="tutorialBody"></p>
+    <div class="tutorial-links" id="tutorialLinks"></div>
+    <div class="tutorial-actions">
+      <button type="button" class="tutorial-prev" id="tutorialPrev">Back</button>
+      <button type="button" class="tutorial-skip" id="tutorialSkip">Skip</button>
+      <button type="button" class="tutorial-next" id="tutorialNext">Next</button>
+      <button type="button" class="tutorial-skip" id="tutorialClose" style="margin-left:auto">✕</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // Connection settings expand/collapse
   document.getElementById('connSettingsToggle').addEventListener('click', () => {
@@ -701,5 +930,11 @@
   });
 </script>
 <script src="dashboard.js"></script>
+<script src="tutorial.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.XTutorial) window.XTutorial.init();
+  });
+</script>
 </body>
 </html>

@@ -44,6 +44,16 @@ let wsReconnectTimer = null;
 let wsReconnectAttempts = 0;
 let activeRelayMode = 'none'; // 'partykit' | 'local' | 'none'
 let activeRelayUrl = '';
+let mpSyncSeen = true;
+let flaggedPosts = [];
+
+const BREAKOUT_PLATFORMS = [
+  { id: 'x', name: '𝕏 Chat', url: 'https://x.com/i/chat', default: true },
+  { id: 'keet', name: 'Keet', url: 'https://docs.trykeet.com/overview/introduction' },
+  { id: 'discord', name: 'Discord', url: 'https://discord.com/channels/@me' },
+  { id: 'mattermost', name: 'Mattermost', url: 'https://mattermost.com' },
+  { id: 'slack', name: 'Slack', url: 'https://slack.com/signin' },
+];
 
 // ---- LocalStorage keys ----
 const LS_HISTORY    = 'xhistory_tweets';
@@ -51,6 +61,8 @@ const LS_MP_ROOM    = 'xhistory_mp_room';
 const LS_RD_KEY     = 'xhistory_rd_key';
 const LS_RELAY_MODE = 'xhistory_relay_mode';
 const LS_RELAY_URL  = 'xhistory_relay_url';
+const LS_MP_SYNC    = 'xhistory_mp_sync_seen';
+const LS_FLAGGED    = 'xhistory_flagged';
 
 // ---- BroadcastChannel (extension → dashboard, same browser) ----
 try {
@@ -75,7 +87,16 @@ function init() {
   setupRaindrop();
   setupKeet();
   setupClear();
+  setupBentoHover();
+  setupBreakout();
   startLiveSync();
+
+  mpSyncSeen = localStorage.getItem(LS_MP_SYNC) !== '0';
+  const syncEl = document.getElementById('mpSyncSeenToggle');
+  if (syncEl) syncEl.checked = mpSyncSeen;
+  updateMpSyncLabel();
+
+  loadFlaggedPosts();
 
   // Restore saved state
   rdApiKey = localStorage.getItem(LS_RD_KEY) || RAINDROP_API_KEY;
@@ -244,7 +265,7 @@ function handleWsMessage(msg) {
       if (feed) {
         const empty = feed.querySelector('.empty-state');
         if (empty) feed.innerHTML = '';
-        feed.insertBefore(buildTweetCard(tweet, true), feed.firstChild);
+        feed.insertBefore(buildMpTweetCard(tweet, true, event.handle || mpRoom?.friendHandle), feed.firstChild);
       }
       if (event.handle) {
         document.getElementById('mpFriendColTitle').textContent = event.handle;
@@ -270,6 +291,10 @@ function handleWsMessage(msg) {
 
   if (msg.type === 'room_info') {
     updateSessionStatus('connected', msg.message);
+  }
+
+  if (msg.type === 'flag') {
+    ingestRemoteFlag(msg.data);
   }
 }
 
@@ -429,6 +454,7 @@ function startLiveSync() {
     // localStorage fallback polling for friend feed (same machine)
     if (mpRoom && (!ws || ws.readyState !== WebSocket.OPEN)) {
       pollFriendFeedLocalStorage();
+      pollFlaggedLocalStorage();
     }
   }, 2000);
 
@@ -438,6 +464,9 @@ function startLiveSync() {
 
 function handleNewTweet(tweet, source) {
   if (source === 'mine') {
+    if (!localStorage.getItem('xhistory_brand_unlocked')) {
+      window.applyXTheme?.();
+    }
     if (allTweets.find(t => t.id === tweet.id)) return;
     allTweets.unshift(tweet);
     localStorage.setItem(LS_HISTORY, JSON.stringify(allTweets));
@@ -450,9 +479,9 @@ function handleNewTweet(tweet, source) {
       first ? feed.insertBefore(card, first) : feed.appendChild(card);
     }
 
-    if (mpConnected) {
+    if (mpConnected && mpSyncSeen) {
       const mpFeed = document.getElementById('mpMyFeed');
-      if (mpFeed) mpFeed.insertBefore(buildTweetCard(tweet, true), mpFeed.firstChild);
+      if (mpFeed) mpFeed.insertBefore(buildMpTweetCard(tweet, true), mpFeed.firstChild);
       broadcastMyTweet(tweet);
     }
     toast(`Seen: ${tweet.author}`);
@@ -460,6 +489,14 @@ function handleNewTweet(tweet, source) {
 }
 
 // localStorage polling fallback (same machine only)
+function pollFlaggedLocalStorage() {
+  if (!mpRoom) return;
+  const room = JSON.parse(localStorage.getItem(`xmp_room_${mpRoom.code}`) || '{}');
+  (room.flaggedFeed || []).forEach(entry => {
+    if (entry.by !== mpRoom.myHandle) ingestRemoteFlag(entry);
+  });
+}
+
 function pollFriendFeedLocalStorage() {
   if (!mpRoom) return;
   const key = `xmp_room_${mpRoom.code}`;
@@ -475,7 +512,7 @@ function pollFriendFeedLocalStorage() {
     if (feed) {
       const empty = feed.querySelector('.empty-state');
       if (empty) feed.innerHTML = '';
-      feed.insertBefore(buildTweetCard(tweet, true), feed.firstChild);
+      feed.insertBefore(buildMpTweetCard(tweet, true), feed.firstChild);
     }
   });
   // Push my tweets to shared storage
@@ -622,7 +659,212 @@ function setupClear() {
 // ============================================================
 // MULTIPLAYER
 // ============================================================
+// ============================================================
+// 𝕏 THEME + BENTO HOVER
+// ============================================================
+window.applyXTheme = function applyXTheme() {
+  document.body.classList.add('x-theme');
+  document.title = '𝕏 Multiplayer';
+  const title = document.getElementById('brandTitle');
+  const sub = document.getElementById('brandSubtitle');
+  if (title) title.textContent = 'Multiplayer';
+  if (sub) sub.style.display = 'block';
+  localStorage.setItem('xhistory_brand_unlocked', '1');
+};
+
+function setupBentoHover() {
+  document.querySelectorAll('.bento-desc').forEach(el => {
+    el.addEventListener('mouseenter', () => el.classList.add('bento-lit'), { once: false });
+  });
+}
+
+// ============================================================
+// FLAGGED DISCUSSION + BREAKOUT
+// ============================================================
+function loadFlaggedPosts() {
+  try {
+    const raw = localStorage.getItem(LS_FLAGGED);
+    flaggedPosts = raw ? JSON.parse(raw) : [];
+  } catch {
+    flaggedPosts = [];
+  }
+}
+
+function saveFlaggedPosts() {
+  localStorage.setItem(LS_FLAGGED, JSON.stringify(flaggedPosts.slice(0, 50)));
+  if (mpRoom) {
+    const key = `xmp_room_${mpRoom.code}`;
+    const room = JSON.parse(localStorage.getItem(key) || '{}');
+    room.flaggedFeed = flaggedPosts;
+    localStorage.setItem(key, JSON.stringify(room));
+  }
+}
+
+function isFlagged(id) {
+  return flaggedPosts.some(f => f.id === id);
+}
+
+function flagTweet(tweet, sourceHandle) {
+  if (isFlagged(tweet.id)) {
+    toast('Already flagged for discussion');
+    return;
+  }
+  const entry = {
+    id: tweet.id,
+    handle: sourceHandle || mpRoom?.myHandle || tweet.handle || '@you',
+    text: (tweet.text || '').replace(/\s+/g, ' ').trim(),
+    url: tweet.url || `https://x.com/i/web/status/${tweet.id}`,
+    flaggedAt: Date.now(),
+    by: mpRoom?.myHandle || 'you',
+  };
+  flaggedPosts.unshift(entry);
+  flaggedPosts = flaggedPosts.slice(0, 50);
+  saveFlaggedPosts();
+  renderFlaggedFeed();
+  broadcastFlag(entry);
+  toast('🚩 Flagged for discussion');
+  document.querySelectorAll(`.flag-btn[data-flag-id="${tweet.id}"]`).forEach(b => {
+    b.classList.add('flagged');
+    b.textContent = '🚩 Flagged';
+  });
+}
+
+function ingestRemoteFlag(entry) {
+  if (!entry || isFlagged(entry.id)) return;
+  if (entry.by === mpRoom?.myHandle) return;
+  flaggedPosts.unshift(entry);
+  flaggedPosts = flaggedPosts.slice(0, 50);
+  saveFlaggedPosts();
+  renderFlaggedFeed();
+}
+
+function broadcastFlag(entry) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    wsSend({ type: 'flag', handle: mpRoom?.myHandle || 'user', data: entry });
+    return;
+  }
+  if (!mpRoom) return;
+  const key = `xmp_room_${mpRoom.code}`;
+  const room = JSON.parse(localStorage.getItem(key) || '{}');
+  if (!room.flaggedFeed) room.flaggedFeed = [];
+  if (!room.flaggedFeed.find(f => f.id === entry.id)) {
+    room.flaggedFeed.unshift(entry);
+    room.flaggedFeed = room.flaggedFeed.slice(0, 50);
+    localStorage.setItem(key, JSON.stringify(room));
+  }
+}
+
+function renderFlaggedFeed() {
+  const list = document.getElementById('mpFlaggedList');
+  const empty = document.getElementById('mpFlaggedEmpty');
+  if (!list) return;
+
+  list.innerHTML = '';
+  if (flaggedPosts.length === 0) {
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  flaggedPosts.forEach(entry => {
+    const row = document.createElement('div');
+    row.className = 'mp-flagged-row';
+    row.dataset.flagId = entry.id;
+    const handle = escHtml(entry.handle || entry.by || '@user');
+    const text = escHtml((entry.text || '').slice(0, 120));
+    row.innerHTML = `
+      <span class="flag-handle">${handle}</span>
+      <span class="flag-text">${text}</span>
+      <button type="button" class="mp-flagged-arrow" title="Copy link & discuss" aria-label="Breakout">→</button>
+    `;
+    row.querySelector('.mp-flagged-arrow').addEventListener('click', () => openBreakout(entry));
+    list.appendChild(row);
+  });
+}
+
+function setupBreakout() {
+  document.getElementById('breakoutClose')?.addEventListener('click', closeBreakout);
+  document.getElementById('breakoutOverlay')?.addEventListener('click', (e) => {
+    if (e.target.id === 'breakoutOverlay') closeBreakout();
+  });
+}
+
+function openBreakout(entry) {
+  const url = entry.url || `https://x.com/i/web/status/${entry.id}`;
+  navigator.clipboard.writeText(url).then(() => toast('Link copied to clipboard'));
+
+  const preview = document.getElementById('breakoutPreview');
+  if (preview) {
+    preview.textContent = `Discuss: ${(entry.text || '').slice(0, 80)}… — link copied. Continue in-app or on:`;
+  }
+
+  const container = document.getElementById('breakoutPlatforms');
+  if (!container) return;
+  container.innerHTML = '';
+  const tweetUrl = encodeURIComponent(url);
+
+  BREAKOUT_PLATFORMS.forEach(p => {
+    const a = document.createElement('a');
+    a.href = p.id === 'x' ? 'https://x.com/i/chat' : p.url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    if (p.default) a.classList.add('default-platform');
+    a.innerHTML = `<span>${p.name}</span>${p.default ? '<span style="font-size:10px;color:var(--dim);margin-left:auto">default</span>' : ''}`;
+    a.addEventListener('click', () => {
+      if (p.id === 'x') toast('Opening 𝕏 chat — paste the copied link');
+    });
+    container.appendChild(a);
+  });
+
+  const inApp = document.createElement('button');
+  inApp.type = 'button';
+  inApp.innerHTML = '<span>💬 Breakout in this dashboard</span>';
+  inApp.addEventListener('click', () => {
+    closeBreakout();
+    document.querySelector('[data-page="multiplayer"]')?.click();
+    toast('Stay in multiplayer — discuss flagged posts in the strip above');
+  });
+  container.prepend(inApp);
+
+  document.getElementById('breakoutOverlay')?.classList.add('open');
+}
+
+function closeBreakout() {
+  document.getElementById('breakoutOverlay')?.classList.remove('open');
+}
+
+function updateMpSyncLabel() {
+  const label = document.getElementById('mpSyncToggleLabel');
+  if (label) label.classList.toggle('on', mpSyncSeen);
+}
+
+function buildMpTweetCard(tweet, isNew = false, sourceHandle = null) {
+  const card = buildTweetCard(tweet, isNew);
+  const flagged = isFlagged(tweet.id);
+  const actions = document.createElement('div');
+  actions.className = 'mp-card-actions';
+  const flagBtn = document.createElement('button');
+  flagBtn.type = 'button';
+  flagBtn.className = 'flag-btn' + (flagged ? ' flagged' : '');
+  flagBtn.dataset.flagId = tweet.id;
+  flagBtn.textContent = flagged ? '🚩 Flagged' : '🚩 Flag for discussion';
+  flagBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    flagTweet(tweet, sourceHandle || mpRoom?.myHandle || tweet.handle);
+  });
+  actions.appendChild(flagBtn);
+  card.appendChild(actions);
+  return card;
+}
+
 function setupMultiplayer() {
+  document.getElementById('mpSyncSeenToggle')?.addEventListener('change', (e) => {
+    mpSyncSeen = e.target.checked;
+    localStorage.setItem(LS_MP_SYNC, mpSyncSeen ? '1' : '0');
+    updateMpSyncLabel();
+    toast(mpSyncSeen ? 'Seen posts will sync to multiplayer' : 'Only flagged posts surface in discussion strip');
+  });
+
   document.getElementById('mpCreateRoom')?.addEventListener('click', createRoom);
   document.getElementById('mpJoinBtn')?.addEventListener('click', () => {
     document.getElementById('mpJoinBox').style.display = 'block';
@@ -637,7 +879,16 @@ function setupMultiplayer() {
   document.getElementById('copyInviteLink')?.addEventListener('click', copyInviteLink);
 
   const saved = localStorage.getItem(LS_MP_ROOM);
-  if (saved) { try { mpRoom = JSON.parse(saved); activateSession(); } catch(e) {} }
+  if (saved) {
+    try {
+      mpRoom = JSON.parse(saved);
+      if (mpRoom?.code) {
+        const room = JSON.parse(localStorage.getItem(`xmp_room_${mpRoom.code}`) || '{}');
+        if (room.flaggedFeed?.length) flaggedPosts = room.flaggedFeed;
+      }
+      activateSession();
+    } catch (e) {}
+  }
 }
 
 function generateCode() {
@@ -652,7 +903,7 @@ function createRoom() {
 
   // localStorage fallback room for same-machine mode
   localStorage.setItem(`xmp_room_${code}`, JSON.stringify({
-    host: handle, hostFeed: [], guestFeed: [], created: Date.now(), guestHandle: null
+    host: handle, hostFeed: [], guestFeed: [], flaggedFeed: [], created: Date.now(), guestHandle: null
   }));
 
   document.getElementById('mpRoomCode').textContent = code;
@@ -725,8 +976,9 @@ function activateSession() {
   const myFeed = document.getElementById('mpMyFeed');
   if (myFeed) {
     myFeed.innerHTML = '';
-    allTweets.slice(0, 30).forEach(t => myFeed.appendChild(buildTweetCard(t, false)));
+    allTweets.slice(0, 30).forEach(t => myFeed.appendChild(buildMpTweetCard(t, false)));
   }
+  renderFlaggedFeed();
 }
 
 function disconnectRoom() {
@@ -738,6 +990,9 @@ function disconnectRoom() {
   mpRoom = null;
   localStorage.removeItem(LS_MP_ROOM);
   friendTweets = [];
+  flaggedPosts = [];
+  saveFlaggedPosts();
+  renderFlaggedFeed();
 
   document.getElementById('mpSetup').style.display = 'block';
   document.getElementById('mpSession').style.display = 'none';
@@ -771,7 +1026,7 @@ function setupRaindrop() {
     card.style.borderLeftColor = f.color;
     card.innerHTML = `
       <h4>${f.title}</h4>
-      <p>${f.desc}</p>
+      <p class="bento-desc">${f.desc}</p>
       <div class="rd-action">
         <button class="rd-btn disabled" data-feature="${f.id}">${f.action}</button>
         <span style="font-size:10px;color:var(--dim);margin-left:8px;margin-top:7px">Requires API key</span>
