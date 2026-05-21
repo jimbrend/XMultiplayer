@@ -73,20 +73,88 @@
     .live-dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
     @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
     .live-label { font-size:11px; color:var(--dim); }
-    .tutorial-toggle {
-      display:flex; align-items:center; gap:6px;
-      padding:5px 12px; border-radius:20px;
-      border:1px solid var(--border); background:var(--card);
-      color:var(--dim); font-size:11px; font-weight:600;
-      cursor:pointer; transition: all .25s;
+    /* Large tutorial toggle — fixed top-right */
+    .tutorial-master {
+      position: fixed;
+      top: 68px;
+      right: 20px;
+      z-index: 10006;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 18px 12px 20px;
+      background: #16181c;
+      border: 1px solid #2f3336;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+      transition: border-color .25s, box-shadow .25s;
+      pointer-events: auto;
     }
-    .tutorial-toggle:hover { border-color: var(--blue); color: var(--white); }
-    .tutorial-toggle.tutorial-on {
-      border-color: var(--blue);
-      color: var(--white);
-      box-shadow: 0 0 16px rgba(29, 155, 240, 0.45), 0 0 32px rgba(29, 155, 240, 0.15);
-      background: rgba(29, 155, 240, 0.12);
+    body.tutorial-active .tutorial-master {
+      border-color: #1d9bf0;
+      box-shadow: 0 0 0 1px rgba(29, 155, 240, 0.5),
+                  0 0 28px rgba(29, 155, 240, 0.35),
+                  0 12px 40px rgba(0, 0, 0, 0.5);
     }
+    .tutorial-master-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #e7e9ea;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+    .tutorial-switch-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .tutorial-switch-wrap input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .tutorial-switch-slider {
+      position: relative;
+      width: 56px;
+      height: 30px;
+      background: #3a3a3a;
+      border-radius: 999px;
+      transition: background .25s;
+      flex-shrink: 0;
+    }
+    .tutorial-switch-slider::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform .25s;
+      box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    }
+    .tutorial-switch-wrap input:checked + .tutorial-switch-slider {
+      background: #1d9bf0;
+    }
+    .tutorial-switch-wrap input:checked + .tutorial-switch-slider::after {
+      transform: translateX(26px);
+    }
+    .tutorial-switch-states {
+      display: flex;
+      flex-direction: column;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      line-height: 1.2;
+    }
+    .tutorial-switch-states .on { color: #1d9bf0; display: none; }
+    .tutorial-switch-states .off { color: #71767b; }
+    .tutorial-switch-wrap input:checked ~ .tutorial-switch-states .on { display: block; }
+    .tutorial-switch-wrap input:checked ~ .tutorial-switch-states .off { display: none; }
 
     /* LAYOUT */
     .main { display:flex; height:calc(100vh - 56px); }
@@ -382,11 +450,20 @@
     }
     .tutorial-card {
       position: fixed; z-index: 10002;
-      width: min(320px, calc(100vw - 32px));
+      width: min(400px, calc(100vw - 48px));
+      max-height: min(420px, 78vh);
+      overflow-y: auto;
       background: #16181c; border: 1px solid #2f3336;
-      border-radius: 16px; padding: 18px 20px;
+      border-radius: 16px; padding: 20px 22px;
       box-shadow: 0 12px 40px rgba(0,0,0,.5);
       pointer-events: auto;
+    }
+    .tutorial-card.tutorial-card-centered {
+      top: 50% !important;
+      left: 50% !important;
+      right: auto !important;
+      bottom: auto !important;
+      transform: translate(-50%, -50%) !important;
     }
     .tutorial-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; color: #fff; }
     .tutorial-card p { font-size: 14px; line-height: 1.65; color: #e7e9ea; margin-bottom: 14px; }
@@ -456,14 +533,20 @@
     <button class="header-tab" data-page="keet">🔗 Keet</button>
   </div>
   <div class="header-right">
-    <button type="button" class="tutorial-toggle" id="tutorialToggle" aria-pressed="false" title="Click: replay walkthrough · Shift+click: disable auto-tutorial">
-      <span>✦</span>
-      <span class="tutorial-toggle-label">Tutorial</span>
-    </button>
     <div class="live-dot" id="liveDot"></div>
     <span class="live-label" id="liveLabel">connecting…</span>
   </div>
 </header>
+
+<!-- Large tutorial ON/OFF — top-right, visible during walkthrough -->
+<div class="tutorial-master" id="tutorialMaster" role="group" aria-label="Tutorial walkthrough">
+  <span class="tutorial-master-title">Tutorial</span>
+  <label class="tutorial-switch-wrap" id="tutorialSwitchLabel">
+    <input type="checkbox" id="tutorialSwitch" aria-label="Turn tutorial walkthrough on or off">
+    <span class="tutorial-switch-slider"></span>
+    <span class="tutorial-switch-states"><span class="off">OFF</span><span class="on">ON</span></span>
+  </label>
+</div>
 
 <div class="main">
 

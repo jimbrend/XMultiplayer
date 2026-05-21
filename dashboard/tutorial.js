@@ -25,9 +25,10 @@
       id: 'conn-settings',
       title: 'Connection Settings',
       body: 'This is where you choose how to add multiplayer. You and whoever you invite — using your chosen relay option — will see each other\'s seen posts side by side: share, track, and discuss.',
-      target: '#connSettingsPanel',
+      target: '#connSettingsToggle',
       tab: 'multiplayer',
       expandConn: true,
+      cardCenter: true,
     },
     {
       id: 'partykit',
@@ -36,6 +37,7 @@
       target: '[data-relay="partykit"]',
       tab: 'multiplayer',
       expandConn: true,
+      cardCenter: true,
     },
     {
       id: 'raindrop',
@@ -43,6 +45,7 @@
       body: 'Even without multiplayer, your seen posts are powerful. Send them to Raindrop.io for bookmarking, collections, and sync — API keys stay on your machine only.',
       target: '#raindropPage .rd-banner',
       tab: 'raindrop',
+      cardCenter: true,
     },
     {
       id: 'source',
@@ -53,12 +56,14 @@
       expandConn: true,
       links: true,
       showPointer: true,
+      cardCenter: true,
     },
     {
       id: 'done',
       title: 'You\'re set',
-      body: 'Flag posts in multiplayer to discuss them in the shared strip. Toggle Tutorial anytime in the header to replay this walkthrough.',
-      target: '#tutorialToggle',
+      body: 'Flag posts in multiplayer to discuss them in the shared strip. Use the large Tutorial toggle at the top right anytime to replay this walkthrough.',
+      target: '#tutorialMaster',
+      cardCenter: true,
     },
   ];
 
@@ -91,6 +96,17 @@
     if (body && !body.classList.contains('open')) {
       body.classList.add('open');
       if (arrow) arrow.textContent = '▴ collapse';
+    }
+  }
+
+  function scrollTargetIntoView(sel) {
+    const el = typeof sel === 'string' ? document.querySelector(sel) : sel;
+    if (el) {
+      try {
+        el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
+      } catch {
+        el.scrollIntoView(true);
+      }
     }
   }
 
@@ -148,12 +164,17 @@
     if (step.tab) navigateTab(step.tab);
     if (step.expandConn) setTimeout(expandConnSettings, 120);
 
+    const delay = step.tab || step.expandConn ? 320 : 80;
     setTimeout(() => {
-      const rect = step.target ? getRect(step.target) : null;
-      renderSpotlight(rect);
-      positionCard(rect);
-      positionPointer(rect, step.showPointer);
-    }, step.tab || step.expandConn ? 280 : 80);
+      if (step.target) scrollTargetIntoView(step.target);
+      setTimeout(() => {
+        const rect = step.target ? getRect(step.target) : null;
+        renderSpotlight(rect);
+        positionCard(rect, step);
+        positionPointer(rect, step.showPointer && !step.cardCenter);
+        requestAnimationFrame(() => positionCard(rect, step));
+      }, step.expandConn ? 180 : 40);
+    }, delay);
   }
 
   function positionPointer(rect, show) {
@@ -168,28 +189,47 @@
     ptr.style.top = `${rect.top - 18}px`;
   }
 
-  function positionCard(rect) {
+  function positionCard(rect, step) {
     const card = document.getElementById('tutorialCard');
     if (!card) return;
-    card.style.top = '';
-    card.style.bottom = '';
-    card.style.left = '';
-    card.style.right = '';
-    if (!rect) {
+
+    const margin = 24;
+    const cardW = Math.min(400, window.innerWidth - margin * 2);
+    const cardH = card.offsetHeight || 260;
+
+    const forceCenter = step?.cardCenter || !rect;
+    const rectTooTall = rect && rect.height > window.innerHeight * 0.32;
+    const wouldClipBelow = rect && rect.top + rect.height + cardH + 32 > window.innerHeight - margin;
+    const wouldClipAbove = rect && rect.top - cardH - 32 < margin;
+    const useCenter = forceCenter || rectTooTall || wouldClipBelow || wouldClipAbove;
+
+    card.classList.toggle('tutorial-card-centered', useCenter);
+
+    if (useCenter) {
       card.style.top = '50%';
       card.style.left = '50%';
+      card.style.right = 'auto';
+      card.style.bottom = 'auto';
       card.style.transform = 'translate(-50%, -50%)';
       return;
     }
+
     card.style.transform = 'none';
     const spaceBelow = window.innerHeight - (rect.top + rect.height);
-    if (spaceBelow > 220) {
-      card.style.top = `${rect.top + rect.height + 16}px`;
-      card.style.left = `${Math.min(rect.left, window.innerWidth - 340)}px`;
+    let top;
+    let left = Math.max(margin, Math.min(rect.left, window.innerWidth - cardW - margin));
+
+    if (spaceBelow >= cardH + 24) {
+      top = rect.top + rect.height + 16;
     } else {
-      card.style.bottom = `${window.innerHeight - rect.top + 16}px`;
-      card.style.left = `${Math.min(rect.left, window.innerWidth - 340)}px`;
+      top = Math.max(margin, rect.top - cardH - 16);
     }
+
+    top = Math.max(margin, Math.min(top, window.innerHeight - cardH - margin));
+    card.style.top = `${top}px`;
+    card.style.left = `${left}px`;
+    card.style.bottom = 'auto';
+    card.style.right = 'auto';
   }
 
   function showOverlay() {
@@ -211,14 +251,16 @@
   }
 
   function updateToggleUi() {
-    const btn = document.getElementById('tutorialToggle');
-    if (!btn) return;
-    btn.classList.toggle('tutorial-on', active);
-    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-    const label = isTutorialOff() ? 'Tutorial off' : active ? 'Tutorial on' : 'Tutorial';
-    btn.title = active ? 'Turn off tutorial' : 'Replay walkthrough';
-    const span = btn.querySelector('.tutorial-toggle-label');
-    if (span) span.textContent = label;
+    const sw = document.getElementById('tutorialSwitch');
+    const master = document.getElementById('tutorialMaster');
+    if (sw) sw.checked = active;
+    if (master) {
+      master.title = active
+        ? 'Turn tutorial off'
+        : isTutorialOff()
+          ? 'Tutorial disabled — turn on to start walkthrough'
+          : 'Turn tutorial on to start walkthrough';
+    }
   }
 
   function start(fromStep = 0) {
@@ -261,15 +303,15 @@
     }
   }
 
-  function toggleTutorial() {
-    if (active) {
-      hideOverlay(false);
-      return;
-    }
-    if (isTutorialOff()) {
+  function onTutorialSwitchChange(checked) {
+    if (checked) {
       localStorage.removeItem(LS_TUTORIAL_OFF);
+      if (!active) start(0);
+    } else {
+      if (active) hideOverlay(false);
+      else localStorage.setItem(LS_TUTORIAL_OFF, '1');
+      updateToggleUi();
     }
-    start(0);
   }
 
   function init() {
@@ -280,12 +322,17 @@
     document.getElementById('tutorialPrev')?.addEventListener('click', prev);
     document.getElementById('tutorialSkip')?.addEventListener('click', skip);
     document.getElementById('tutorialClose')?.addEventListener('click', () => hideOverlay(true));
-    document.getElementById('tutorialToggle')?.addEventListener('click', (e) => {
-      if (e.shiftKey) {
-        setTutorialEnabled(isTutorialOff());
-        return;
+    document.getElementById('tutorialSwitch')?.addEventListener('change', (e) => {
+      onTutorialSwitchChange(e.target.checked);
+    });
+
+    document.getElementById('tutorialMaster')?.addEventListener('click', (e) => {
+      if (e.target.closest('#tutorialSwitchLabel') || e.target.id === 'tutorialSwitch') return;
+      const sw = document.getElementById('tutorialSwitch');
+      if (sw) {
+        sw.checked = !sw.checked;
+        onTutorialSwitchChange(sw.checked);
       }
-      toggleTutorial();
     });
 
     window.addEventListener('resize', () => {
