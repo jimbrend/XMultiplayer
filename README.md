@@ -1,12 +1,12 @@
 # 𝕏 Multiplayer + History Dashboard
 
-Track every post you see on 𝕏. Multiplayer feed sharing with friends anywhere in the world. 𝕏 logo replacement. Raindrop.io integration.
+Track every post you see on 𝕏. Multiplayer feed sharing with friends anywhere in the world. X character to --->  𝕏 logo replacement with more features (WIP). Raindrop.io integration.
 
 ---
 
-## Quick Start
+## Quick Start Options: download and then open to run it.  Optionally clone from terminal or run from terminal too after opening the extension...
 
-### 1 — Install the Chrome Extension
+### 1 — Installation
 
 1. Clone or save this repo as **`x-multiplayer`** (folder name matters for the open-dashboard helper).
 2. `chrome://extensions/` → enable **Developer mode**
@@ -88,7 +88,7 @@ When your friend opens this link, the room code is pre-filled. They just enter t
 
 ---
 
-## Other Relay Options (on roadmap)
+## Other Relay Options (on roadmap), including standalone application and 𝕏 auth 
 
 See `roadmap.md` and the **Other Options** tabs inside Connection Settings for:
 - **Cloudflare Workers + Durable Objects** — global edge, free tier
