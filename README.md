@@ -8,9 +8,11 @@ Track every post you see on 𝕏. Multiplayer feed sharing with friends anywhere
 
 ### 1 — Install the Chrome Extension
 
-1. `chrome://extensions/` → enable **Developer mode**
-2. **Load unpacked** → select the `extension/` folder
-3. Browse `x.com` — posts you dwell on 600ms+ are logged automatically
+1. Clone or save this repo as **`x-multiplayer`** (folder name matters for the open-dashboard helper).
+2. `chrome://extensions/` → enable **Developer mode**
+3. **Load unpacked** → select `x-multiplayer/extension/`
+4. Browse `x.com` — posts you dwell on 600ms+ are logged automatically
+5. **Open Dashboard** in the extension popup → choose **macOS / Linux / Windows** to locate `x-multiplayer/dashboard/index.html`
 
 ### 2 — Start the Dashboard
 
@@ -19,7 +21,7 @@ node server.js
 # → http://localhost:3000
 ```
 
-Or open `dashboard/index.html` directly in Chrome.
+Or open **`x-multiplayer/dashboard/index.html`** in Chrome (wherever you cloned the repo — Downloads, Desktop, etc.). The extension popup **Open Dashboard** button lets you pick **macOS**, **Linux**, or **Windows** and will search Downloads or use your saved folder path.
 
 ---
 
@@ -38,7 +40,7 @@ npx partykit deploy         # deploys partykit-server.ts
 ```
 
 After deploy, PartyKit gives you a URL like:
-`x-history-relay.YOUR_USERNAME.partykit.dev`
+`x-multiplayer-relay.YOUR_USERNAME.partykit.dev`
 
 1. Open `dashboard/dashboard.js`, set `PARTYKIT_HOST` to your URL
 2. In the dashboard → Multiplayer → Connection Settings → click **PartyKit** to turn it ON (indicator turns green)
@@ -97,7 +99,7 @@ None of these have API keys in source yet. See `roadmap.md` for implementation n
 ## File Structure
 
 ```
-x-history-app/
+x-multiplayer/
 ├── extension/
 │   ├── manifest.json       Chrome extension config (Manifest V3)
 │   ├── content.js          Logo replacement + feed tracking

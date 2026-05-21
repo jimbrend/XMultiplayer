@@ -2,45 +2,124 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>𝕏 History</title>
+  <title>𝕏 Multiplayer</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      width: 320px; min-height: 200px;
+      width: 340px; min-height: 200px;
       background: #000; color: #fff;
-      font-family: 'Helvetica Neue', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       padding: 16px;
+      font-size: 13px;
     }
-    h1 { font-size: 18px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-    .x-logo { font-size: 22px; }
-    .stats { display: flex; gap: 12px; margin-bottom: 12px; }
-    .stat { background: #111; border-radius: 8px; padding: 8px 14px; text-align: center; flex: 1; }
-    .stat .num { font-size: 20px; font-weight: bold; }
-    .stat .label { font-size: 10px; color: #666; }
+    h1 { font-size: 17px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; font-weight: 700; }
+    .subtitle { font-size: 11px; color: #71767b; margin-bottom: 12px; }
+    .x-logo { font-size: 20px; }
+    .stats { display: flex; gap: 10px; margin-bottom: 12px; }
+    .stat { background: #16181c; border: 1px solid #2f3336; border-radius: 8px; padding: 8px 12px; text-align: center; flex: 1; }
+    .stat .num { font-size: 18px; font-weight: bold; color: #1d9bf0; }
+    .stat .label { font-size: 9px; color: #71767b; letter-spacing: 0.5px; }
     button {
-      width: 100%; padding: 10px; border-radius: 8px;
-      border: 1px solid #333; background: #111;
+      width: 100%; padding: 10px; border-radius: 999px;
+      border: 1px solid #2f3336; background: #16181c;
       color: #fff; cursor: pointer; margin-top: 6px;
-      font-size: 13px; transition: background 0.2s;
+      font-size: 13px; font-weight: 600; transition: background 0.2s, border-color 0.2s;
     }
-    button:hover { background: #222; }
-    button.primary { background: #fff; color: #000; border-color: #fff; }
-    button.primary:hover { background: #e0e0e0; }
-    button.danger { border-color: #ff4444; color: #ff4444; }
-    .sep { border: none; border-top: 1px solid #222; margin: 12px 0; }
+    button:hover { background: #1a1a1a; border-color: #536471; }
+    button.primary { background: #1d9bf0; color: #fff; border-color: #1d9bf0; }
+    button.primary:hover { background: #1a8cd8; }
+    button.danger { border-color: #f4212e; color: #f4212e; background: transparent; }
+    button.danger:hover { background: rgba(244,33,46,.1); }
+    .sep { border: none; border-top: 1px solid #2f3336; margin: 12px 0; }
+    #openDashboardPanel {
+      display: none;
+      margin-top: 10px;
+      padding: 12px;
+      background: #16181c;
+      border: 1px solid #2f3336;
+      border-radius: 12px;
+    }
+    .path-reminder {
+      font-size: 12px;
+      line-height: 1.5;
+      color: #e7e9ea;
+      margin-bottom: 10px;
+    }
+    .path-reminder code {
+      display: block;
+      margin-top: 6px;
+      padding: 8px 10px;
+      background: #000;
+      border: 1px solid #2f3336;
+      border-radius: 8px;
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      color: #1d9bf0;
+      word-break: break-all;
+    }
+    .os-row { display: flex; gap: 6px; margin-bottom: 8px; }
+    .os-row button { flex: 1; margin-top: 0; padding: 8px 4px; font-size: 12px; }
+    .path-input {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #2f3336;
+      background: #000;
+      color: #fff;
+      font-size: 11px;
+      font-family: ui-monospace, monospace;
+    }
+    .path-input::placeholder { color: #536471; }
+    .open-status {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .open-status.info { background: rgba(29,155,240,.1); border: 1px solid rgba(29,155,240,.3); color: #e7e9ea; }
+    .open-status.success { background: rgba(0,186,124,.1); border: 1px solid rgba(0,186,124,.3); color: #00ba7c; }
+    .open-status.warn { background: rgba(255,200,0,.08); border: 1px solid rgba(255,200,0,.25); color: #e7e9ea; }
+    .hint { font-size: 10px; color: #71767b; margin-top: 6px; line-height: 1.4; }
   </style>
 </head>
 <body>
-  <h1><span class="x-logo">𝕏</span> History Tracker</h1>
+  <h1><span class="x-logo">𝕏</span> Multiplayer Tracker</h1>
+  <p class="subtitle">Project folder: <strong>x-multiplayer</strong></p>
   <div class="stats" id="stats">
     <div class="stat"><div class="num" id="seenCount">—</div><div class="label">SEEN</div></div>
     <div class="stat"><div class="num" id="likedCount">—</div><div class="label">LIKED</div></div>
     <div class="stat"><div class="num" id="bookmarkCount">—</div><div class="label">BOOKMARKED</div></div>
   </div>
   <hr class="sep">
-  <button class="primary" id="openDashboard">Open Dashboard ↗</button>
-  <button id="exportBtn">Export History JSON</button>
-  <button class="danger" id="clearBtn">Clear History</button>
+  <button class="primary" id="openDashboard" type="button">Open Dashboard ↗</button>
+
+  <div id="openDashboardPanel">
+    <p class="path-reminder">
+      Open wherever you <strong>cloned</strong> or <strong>saved</strong> the project (Downloads, Desktop, etc.):
+      <code>x-multiplayer/dashboard/index.html</code>
+    </p>
+    <p class="hint">Click your OS — we’ll search Downloads, use your saved folder, or copy paths for Finder / Explorer.</p>
+    <div class="os-row">
+      <button type="button" data-os="mac">🍎 macOS</button>
+      <button type="button" data-os="linux">🐧 Linux</button>
+      <button type="button" data-os="win">🪟 Windows</button>
+    </div>
+    <input type="text" class="path-input" id="projectPathInput" placeholder="Optional: paste folder containing x-multiplayer/">
+    <button type="button" id="saveProjectPath">Save clone folder</button>
+    <button type="button" id="openLocalhost">Open localhost:3000 (if server running)</button>
+    <div class="open-status info" id="openDashboardStatus"></div>
+  </div>
+
+  <button id="exportBtn" type="button">Export History JSON</button>
+  <button class="danger" id="clearBtn" type="button">Clear History</button>
+  <script src="open-dashboard.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

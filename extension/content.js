@@ -230,9 +230,14 @@ function init() {
 
 init();
 
-// Open dashboard from keyboard shortcut Alt+X
+// Open dashboard from keyboard shortcut Alt+X (localhost, or extension helper tab)
 document.addEventListener('keydown', (e) => {
   if (e.altKey && e.key === 'x') {
-    window.open(DASHBOARD_URL, '_blank');
+    e.preventDefault();
+    chrome.runtime.sendMessage({ type: 'OPEN_DASHBOARD' }, () => {
+      if (chrome.runtime.lastError) {
+        window.open(DASHBOARD_URL, '_blank');
+      }
+    });
   }
 });

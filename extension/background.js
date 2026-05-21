@@ -27,4 +27,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     chrome.storage.local.set({ userHandle: msg.handle }, () => sendResponse({ ok: true }));
     return true;
   }
+  if (msg.type === 'OPEN_DASHBOARD') {
+    chrome.tabs.create({ url: 'http://localhost:3000' }, (tab) => {
+      if (chrome.runtime.lastError) sendResponse({ ok: false });
+      else sendResponse({ ok: true, tabId: tab?.id });
+    });
+    return true;
+  }
 });

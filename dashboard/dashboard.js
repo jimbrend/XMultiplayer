@@ -7,7 +7,7 @@
 // ============================================================
 
 // PartyKit (recommended — free, cross-internet)
-const PARTYKIT_HOST = 'x-history-relay.YOUR_USERNAME.partykit.dev'; // TODO: replace after deploy
+const PARTYKIT_HOST = 'x-multiplayer-relay.YOUR_USERNAME.partykit.dev'; // TODO: replace after deploy
 
 // Local relay (same network — run: node local-relay.js)
 const LOCAL_RELAY_HOST = 'localhost:8080';

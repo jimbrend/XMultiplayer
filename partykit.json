@@ -1,5 +1,5 @@
 {
-  "name": "x-history-relay",
+  "name": "x-multiplayer-relay",
   "main": "partykit-server.ts",
   "compatibilityDate": "2024-01-01"
 }

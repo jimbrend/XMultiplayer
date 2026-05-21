@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "𝕏 History & Multiplayer",
-  "version": "1.0",
-  "description": "Track seen/liked/bookmarked posts, replace X with 𝕏 logo, multiplayer feed sharing",
-  "permissions": ["activeTab", "storage", "scripting"],
+  "name": "𝕏 Multiplayer",
+  "version": "1.1",
+  "description": "Track seen posts, 𝕏 logo, multiplayer feeds — open x-multiplayer/dashboard locally",
+  "permissions": ["activeTab", "storage", "scripting", "downloads", "tabs"],
   "host_permissions": ["https://x.com/*", "https://twitter.com/*"],
   "content_scripts": [
     {
@@ -15,7 +15,7 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "𝕏 History"
+    "default_title": "𝕏 Multiplayer"
   },
   "web_accessible_resources": [
     {

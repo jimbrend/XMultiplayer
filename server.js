@@ -1,4 +1,4 @@
-// server.js — Simple static file server for 𝕏 History Dashboard
+// server.js — Simple static file server for 𝕏 Multiplayer dashboard
 // Run: node server.js  →  opens at http://localhost:3000
 
 const http = require('http');
@@ -45,6 +45,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`\n✓ 𝕏 History Dashboard running at http://localhost:${PORT}`);
+  console.log(`\n✓ 𝕏 Multiplayer dashboard at http://localhost:${PORT}`);
+  console.log(`  Local file: x-multiplayer/dashboard/index.html\n`);
   console.log(`  Open this URL in Chrome after installing the extension.\n`);
 });
